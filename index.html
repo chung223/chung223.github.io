@@ -9,7 +9,8 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+<script>try{const t=localStorage.getItem('trav-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}</script>
 <style>
   :root{
     --bg:#16120c; --surface:#1f1913; --raised:#2a2216;
@@ -61,24 +62,65 @@
   .flow b{color:var(--gold)}
   footer{margin-top:auto; padding-top:36px; color:var(--muted); font-size:11.5px; text-align:center}
   footer a{color:var(--muted)}
+  /* ── 即時儀表板 ── */
+  .dash{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; width:min(860px,100%); margin-bottom:18px}
+  .dcard{
+    background:linear-gradient(180deg,var(--raised),var(--surface));
+    border:1px solid var(--line); border-radius:18px; padding:18px 20px;
+    box-shadow:0 18px 40px -18px rgba(0,0,0,.55);
+  }
+  .dcard h3{font:700 13px/1.4 "Noto Sans TC",sans-serif; letter-spacing:.14em; color:var(--muted); margin-bottom:10px}
+  .dcard h3 a{color:inherit; text-decoration:none}
+  .dcard h3 a:hover{color:var(--gold)}
+  .drow{display:flex; align-items:baseline; gap:10px; padding:5px 0; border-bottom:1px dashed var(--line); font-size:13.5px; flex-wrap:wrap}
+  .drow:last-of-type{border-bottom:0}
+  .drow .tm{font:700 16px "Chakra Petch",monospace; color:var(--gold); font-variant-numeric:tabular-nums; min-width:52px}
+  .drow .cd{color:var(--purple); font-weight:700; font-size:12px; min-width:64px}
+  .drow .ds{color:var(--muted); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
+  .drow .st{font-size:12px; color:var(--muted)}
+  .drow a{color:var(--gold); text-decoration:none; font-size:12px; white-space:nowrap}
+  .dnote{font-size:11px; color:var(--muted); margin-top:8px; opacity:.85}
+  .dchip{display:inline-block; font-size:11px; font-weight:700; border:1px solid var(--line-strong); border-radius:6px; padding:1px 7px; color:var(--muted)}
   @media (prefers-color-scheme: light){
-    :root{
+    :root:not([data-theme="dark"]){
       --bg:#f5f0e5; --surface:#fdfbf4; --raised:#ffffff;
       --line:rgba(124,95,43,.18); --line-strong:rgba(124,95,43,.36);
       --ink:#2b2416; --muted:#7b6d55; --gold:#9c7a36; --gold-deep:#c8a35f;
       --purple:#7c4f9e; --purple-deep:#8e4e9e;
     }
-    .go{color:#fffdf6}
-    body{background:
+    :root:not([data-theme="dark"]) .go{color:#fffdf6}
+    :root:not([data-theme="dark"]) body{background:
       radial-gradient(1100px 500px at 75% -10%, rgba(156,122,54,.08), transparent 60%),
       radial-gradient(800px 400px at -5% 30%, rgba(142,78,158,.06), transparent 55%),
       var(--bg)}
   }
+  :root[data-theme="light"]{
+    --bg:#f5f0e5; --surface:#fdfbf4; --raised:#ffffff;
+    --line:rgba(124,95,43,.18); --line-strong:rgba(124,95,43,.36);
+    --ink:#2b2416; --muted:#7b6d55; --gold:#9c7a36; --gold-deep:#c8a35f;
+    --purple:#7c4f9e; --purple-deep:#8e4e9e;
+  }
+  :root[data-theme="light"] .go{color:#fffdf6}
+  :root[data-theme="light"] body{background:
+    radial-gradient(1100px 500px at 75% -10%, rgba(156,122,54,.08), transparent 60%),
+    radial-gradient(800px 400px at -5% 30%, rgba(142,78,158,.06), transparent 55%),
+    var(--bg)}
 </style>
 </head>
 <body>
   <h1>旅人工具箱</h1>
   <p class="sub">TRAVELER'S TOOLKIT · 移動 × 票務</p>
+
+  <div class="dash" id="dash" hidden>
+    <div class="dcard" id="d-mrt">
+      <h3><a href="https://chung223.github.io/tymetrofast/">🚇 下一班機捷 ↗</a></h3>
+      <div id="d-mrt-body"><p class="dnote">載入中…</p></div>
+    </div>
+    <div class="dcard" id="d-fl">
+      <h3><a href="https://chung223.github.io/tymetrofast/#v=flight">✈ 航班動態 ↗</a></h3>
+      <div id="d-fl-body"><p class="dnote">載入中…</p></div>
+    </div>
+  </div>
 
   <div class="cards">
     <a class="card mrt" href="https://chung223.github.io/tymetrofast/">
@@ -109,5 +151,83 @@
   <footer>
     非官方工具，僅供參考 · <a href="https://github.com/chung223" target="_blank" rel="noopener">GitHub @chung223</a>
   </footer>
+
+<script>
+/* ── 即時儀表板：讀兩個子站的公開 JSON ＋ 同網域共用的收藏（localStorage）── */
+(function(){
+  const $id = (x) => document.getElementById(x);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const J = (u) => fetch(u, {cache:'no-cache'}).then((r) => { if (!r.ok) throw 0; return r.json(); });
+  const nowTW = () => {
+    const s = new Date().toLocaleString('sv-SE', {timeZone:'Asia/Taipei'});
+    return { date: s.slice(0,10), min: +s.slice(11,13)*60 + +s.slice(14,16) };
+  };
+  const fmt = (m) => `${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.round(m)%60).padStart(2,'0')}`;
+  const LS = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+
+  async function mrtCard(){
+    const el = $id('d-mrt-body');
+    try {
+      const base = '/tymetrofast/data/';
+      const [network, timetable, holi] = await Promise.all([J(base+'network.json'), J(base+'timetable.json'), J(base+'holidays.json')]);
+      const fav = (LS('tymf-favs') || [])[0];
+      const [from, to] = (fav || 'A1|A13').split('|');
+      const now = nowTW();
+      const dow = new Date(now.date+'T12:00:00Z').getUTCDay();
+      const dayType = (holi.holidays||[]).includes(now.date) || dow===0 || dow===6 ? 'holiday' : 'weekday';
+      const idxOf = new Map(network.stations.map((s,i) => [s.id, i]));
+      const nameOf = new Map(network.stations.map((s) => [s.id, s.name]));
+      const dir = (idxOf.get(to) ?? 0) > (idxOf.get(from) ?? 0) ? 'S' : 'N';
+      const deps = [];
+      let last = -1;
+      for (const tr of (timetable.dayTypes[dayType] || [])) {
+        if (tr.dir !== dir) continue;
+        const stop = tr.stops.find((x) => x[0] === from);
+        if (!stop) continue;
+        last = Math.max(last, stop[1]);
+        if (stop[1] >= now.min) deps.push({ t: stop[1], type: tr.type });
+      }
+      deps.sort((a,b) => a.t - b.t);
+      const link = `https://chung223.github.io/tymetrofast/#from=${from}&to=${to}&m=now`;
+      el.innerHTML =
+        `<div class="drow"><span class="ds"><b>${esc(from)} ${esc(nameOf.get(from)||'')}</b> → ${esc(to)} ${esc(nameOf.get(to)||'')}${fav ? '' : '（示範，收藏路線後顯示你的）'}</span></div>` +
+        (deps.slice(0,3).map((d) => `<div class="drow"><span class="tm">${fmt(d.t)}</span><span class="cd">${Math.round(d.t-now.min)} 分後</span><span class="dchip">${d.type==='express'?'直達':'普通'}</span></div>`).join('') || '<div class="drow"><span class="ds">今日已收班</span></div>') +
+        `<div class="drow"><span class="st">末班 <b>${last>=0?fmt(last):'—'}</b></span><a href="${link}">完整轉乘規劃 ▶</a></div>`;
+      $id('dash').hidden = false;
+    } catch { el.innerHTML = '<p class="dnote">暫時無法載入班表</p>'; }
+  }
+
+  async function flightCard(){
+    const el = $id('d-fl-body');
+    try {
+      const d = await J('/tymetrofast/data/fids.json').catch(() => J('/as-jx/tdx.json'));
+      const favs = LS('trav-fav-flights') || [];
+      const now = nowTW();
+      const fresh = (r) => { // 已過 20 分的不顯示（含跨午夜）
+        let df = (+r.st.slice(0,2))*60 + (+r.st.slice(3)) - now.min;
+        if (df < -720) df += 1440;
+        return df > -20;
+      };
+      const tpe = d.airports?.TPE || {};
+      const all = [...(tpe.dep||[]).map((r) => ({...r, k:'dep'})), ...(tpe.arr||[]).map((r) => ({...r, k:'arr'}))];
+      let rows = all.filter((r) => favs.includes(r.f) || (r.cs||[]).some((c) => favs.includes(c)));
+      const isFav = rows.length > 0;
+      if (!isFav) rows = (tpe.dep||[]).filter(fresh).map((r) => ({...r, k:'dep'}));
+      rows = rows.slice(0, 4);
+      el.innerHTML = (rows.map((r) => {
+        const eff = r.at || r.et;
+        const spot = r.k==='dep' ? [r.term?`T${r.term}`:'', r.ck?`櫃台${r.ck}`:'', r.gate?`門${r.gate}`:''].filter(Boolean).join('・') : (r.belt?`轉盤${r.belt}`:'');
+        return `<div class="drow"><span class="tm">${esc(r.st)}${eff && eff!==r.st ? `→${esc(eff)}` : ''}</span><span class="ds">${isFav?'⭐ ':''}${esc(r.f)} ${r.k==='dep'?'→':'←'} ${esc(r.o)}${spot?`・${esc(spot)}`:''}</span><a href="https://chung223.github.io/tymetrofast/#flight=${encodeURIComponent(r.f)}">🚇</a></div>`;
+      }).join('') || '<div class="drow"><span class="ds">此時段無航班</span></div>') +
+        `<p class="dnote">${isFav ? '⭐ 收藏航班（兩站互通）' : '接下來的桃機出發（在任一站 ☆ 收藏後優先顯示）'} · 看板 ${esc(d.updated_at||'')} 更新</p>`;
+      $id('dash').hidden = false;
+    } catch { el.innerHTML = '<p class="dnote">看板資料暫時無法載入</p>'; }
+  }
+
+  mrtCard(); flightCard();
+  setInterval(mrtCard, 60000);
+  setInterval(flightCard, 5*60000);
+})();
+</script>
 </body>
 </html>
