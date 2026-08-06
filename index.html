@@ -244,7 +244,7 @@
       const trains = tt.days?.[now.date];
       if (!trains) throw 0;
       const nameOf = (id) => sts?.stations?.find((s) => s.id === id)?.zh ?? id;
-      const seatTxt = (v) => !v ? '' : /full/i.test(v) ? '售完' : /limit/i.test(v) ? '有限' : '充足';
+      const seatTxt = (v) => !v ? '' : v === 'X' || /full/i.test(v) ? '售完' : v === 'L' || /limit/i.test(v) ? '有限' : '充足';
       const rows = [];
       for (const tr of trains) {
         const i = tr.stops.findIndex(([sid]) => sid === '1020');
@@ -252,7 +252,11 @@
         const dep = tr.stops[i][1];
         if (!dep || (+dep.slice(0,2))*60 + (+dep.slice(3,5)) < now.min) continue;
         const dest = tr.stops[tr.stops.length - 1][0];
-        const seat = live?.seat?.['1020']?.[tr.no]?.[0];
+        const ent = live?.seat?.['1020']?.[tr.no];
+        // 新格式為逐站陣列 → 取到終點站的狀態；舊格式為 [標準, 商務]
+        const seat = !ent ? null : Array.isArray(ent[0])
+          ? (ent.find((e) => e[0] === dest) ?? ent[ent.length - 1])?.[1]
+          : ent[0];
         rows.push({ dep: dep.slice(0,5), no: tr.no, dest, seat });
       }
       rows.sort((a,b) => a.dep.localeCompare(b.dep));
