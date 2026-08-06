@@ -127,16 +127,20 @@
       <h3><a href="https://chung223.github.io/tymetrofast/#v=flight">✈ 航班動態 ↗</a></h3>
       <div id="d-fl-body"><p class="dnote">載入中…</p></div>
     </div>
+    <div class="dcard" id="d-hsr" hidden>
+      <h3><a href="https://chung223.github.io/tymetrofast/#v=hsr">🚄 桃園站下一班高鐵 ↗</a></h3>
+      <div id="d-hsr-body"><p class="dnote">載入中…</p></div>
+    </div>
   </div>
 
   <div class="cards">
     <a class="card mrt" href="https://chung223.github.io/tymetrofast/">
       <span class="tag">GETTING THERE · 移動的事</span>
-      <h2>🚇 機捷快轉</h2>
-      <p>桃園機場捷運的最快搭法：直達車＋轉乘逐班計算、查航班看報到櫃台、接送機規劃、趕飛機反推最晚出發。</p>
+      <h2>🚄 快轉</h2>
+      <p>高鐵 × 機捷 × 桃園機場：高鐵任意起訖與餘票、機捷直達車轉乘逐班計算、查航班看報到櫃台、接送機與出差行程規劃。</p>
       <div class="feats">
-        <span>官方逐班時刻</span><span>報到櫃台</span><span>接送機</span><span>高鐵接駁</span>
-        <span>機場天氣・METAR</span><span>票價</span><span>離線 PWA</span><span>中英日韓</span>
+        <span>高鐵時刻・餘票</span><span>官方逐班時刻</span><span>報到櫃台</span><span>接送機</span>
+        <span>高鐵×機捷聯程</span><span>票價</span><span>離線 PWA</span><span>中英日韓</span>
       </div>
       <span class="go">出發 ▶</span>
     </a>
@@ -231,9 +235,38 @@
     } catch { el.innerHTML = '<p class="dnote">看板資料暫時無法載入</p>'; }
   }
 
-  mrtCard(); flightCard();
+  async function hsrCard(){
+    const el = $id('d-hsr-body');
+    try {
+      const base = '/tymetrofast/data/';
+      const [tt, live, sts] = await Promise.all([J(base+'thsr-timetable.json'), J(base+'thsr-live.json').catch(() => null), J(base+'thsr-stations.json').catch(() => null)]);
+      const now = nowTW();
+      const trains = tt.days?.[now.date];
+      if (!trains) throw 0;
+      const nameOf = (id) => sts?.stations?.find((s) => s.id === id)?.zh ?? id;
+      const seatTxt = (v) => !v ? '' : /full/i.test(v) ? '售完' : /limit/i.test(v) ? '有限' : '充足';
+      const rows = [];
+      for (const tr of trains) {
+        const i = tr.stops.findIndex(([sid]) => sid === '1020');
+        if (i < 0 || i === tr.stops.length - 1) continue;
+        const dep = tr.stops[i][1];
+        if (!dep || (+dep.slice(0,2))*60 + (+dep.slice(3,5)) < now.min) continue;
+        const dest = tr.stops[tr.stops.length - 1][0];
+        const seat = live?.seat?.['1020']?.[tr.no]?.[0];
+        rows.push({ dep: dep.slice(0,5), no: tr.no, dest, seat });
+      }
+      rows.sort((a,b) => a.dep.localeCompare(b.dep));
+      el.innerHTML = rows.slice(0,4).map((r) =>
+        `<div class="drow"><span class="tm">${esc(r.dep)}</span><span class="ds">${esc(r.no)} 次 往${esc(nameOf(r.dest))}</span><span class="st">${r.seat ? '標準 ' + seatTxt(r.seat) : ''}</span></div>`
+      ).join('') || '<div class="drow"><span class="ds">今日班次已結束</span></div>';
+      el.innerHTML += `<p class="dnote">餘票每 30 分鐘更新 · ${esc(live?.updated ?? '')}</p>`;
+      $id('d-hsr').hidden = false;
+    } catch { $id('d-hsr').hidden = true; }
+  }
+  mrtCard(); flightCard(); hsrCard();
   setInterval(mrtCard, 60000);
   setInterval(flightCard, 5*60000);
+  setInterval(hsrCard, 5*60000);
 })();
 </script>
 </body>
