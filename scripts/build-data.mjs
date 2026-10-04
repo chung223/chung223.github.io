@@ -2,9 +2,11 @@
 // 產生首頁用的 data.json：每個專案的 commit 熱力圖、最後更新時間、最近改了什麼。
 //
 // 隱私規則（這支腳本的輸出會公開）：
-//   - 私有 repo 預設完全不出現；要在 projects.json 明確列出才會納入。
+//   - 私有 repo 預設會自動列出（projects.json 的 autoListPrivate），沒另外設定時
+//     顯示名稱就是 repo 名稱、簡介就是 GitHub 上的 description，所以這兩樣等於公開。
+//     不想列的在 projects.json 標 hide 或 aggregateOnly。
 //   - 私有 repo 只輸出「顯示名稱、簡介、語言、每日 commit 數、最後更新時間」，
-//     絕不輸出 commit 訊息、repo 名稱或網址。
+//     絕不輸出 commit 訊息或網址。
 //
 // 環境變數：
 //   STATS_TOKEN   能讀私有 repo 的 token（fine-grained PAT：Contents + Metadata 唯讀）。
@@ -24,6 +26,7 @@ const OUT = process.argv[2] || 'data.json';
 
 const STATS_TOKEN = process.env.STATS_TOKEN || '';
 const TOKEN = STATS_TOKEN || process.env.GITHUB_TOKEN || '';
+const AUTO_LIST_PRIVATE = cfg.autoListPrivate ?? false;
 const MAX_COMMITS = 5000;
 const HEATMAP_DAYS = 53 * 7;
 const RECENT_COMMITS = 8;
@@ -119,8 +122,8 @@ const selected = repos.flatMap((repo) => {
   const entry = cfg.projects?.[repo.name] ?? {};
   if (entry.hide) return [];
   if ((repo.fork || repo.archived) && !entry.include) return [];
-  // 私有 repo 必須在 projects.json 明確列出（有簡介，或標成 aggregateOnly）
-  if (repo.private && !entry.summary && !entry.aggregateOnly) return [];
+  // autoListPrivate 關掉時，私有 repo 必須在 projects.json 明確列出（有簡介，或標成 aggregateOnly）
+  if (repo.private && !AUTO_LIST_PRIVATE && !entry.summary && !entry.aggregateOnly) return [];
   return [{ repo, entry }];
 });
 
