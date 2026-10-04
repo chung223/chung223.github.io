@@ -33,14 +33,16 @@ export function summarize(data, today) {
 export const PALETTES = {
   light: {
     h: [null, '#c3d0e6', '#8ba3cf', '#4d6fb0', '#1e3d7e'], front: 0.14, side: 0.32,
-    win: 'rgba(255,255,255,.62)', winPct: 62, glow: false,
+    win: 'rgba(255,255,255,.62)', winPct: 62, glow: false, night: false,
+    sun: '#f5b83d', ray: '#f0a72b', halo: 'rgba(245,184,61,.2)', cloud: '#dde6f1',
     grass: ['#a9cf93', '#9bc486'], canopy: '#4e8d4b', canopyHi: '#7ab36c', trunk: '#7a5a3a', water: '#9cc9e8',
     ground: 'rgba(28,26,23,.11)', cell0: 'rgba(28,26,23,.08)', rule: 'rgba(28,26,23,.16)',
     seal: '#c23a22', ink: '#1c1a17', muted: '#736b5e',
   },
   dark: {
     h: [null, '#1f2d4d', '#2c447a', '#4166b3', '#6b93e6'], front: 0.2, side: 0.45,
-    win: 'rgba(255,216,138,.92)', winPct: 46, glow: true,
+    win: 'rgba(255,216,138,.92)', winPct: 46, glow: true, night: true,
+    moon: '#f4e9c1', halo: 'rgba(244,233,193,.1)', star: '#ffffff',
     grass: ['#22402a', '#1d3724'], canopy: '#3c7a45', canopyHi: '#5eaa63', trunk: '#5b4630', water: '#2b5a80',
     ground: 'rgba(235,229,214,.06)', cell0: 'rgba(235,229,214,.09)', rule: 'rgba(235,229,214,.17)',
     seal: '#f0674c', ink: '#ebe5d6', muted: '#9a917f',
@@ -65,7 +67,8 @@ export function layout({ total, level, today, W, weeks }) {
   const pad = 4;
   const pitch = (W - 2 * pad - 7 * sx) / weeks, bw = pitch * 0.78;
   const ox = sx * 0.8, oy = sy * 0.8;
-  const top = maxH + 26;
+  // 樓頂上方留一段天空，放太陽／月亮
+  const top = maxH + (small ? 50 : 66);
   const start = addDays(today, -wdOf(today) - (weeks - 1) * 7);
   let peak = 1;
   for (let i = 0; i < weeks * 7; i++) peak = Math.max(peak, total[addDays(start, i)] || 0);
@@ -92,10 +95,43 @@ export function layout({ total, level, today, W, weeks }) {
   const front = top + 7 * sy + 3, back = top + sy - oy - 3;
   const left = pad - 3, right = pad + weeks * pitch - (pitch - bw) + 3, lean = 6 * sx + ox;
   return {
-    today, towers, labels,
+    today, towers, labels, top,
+    celestial: { x: W - (small ? 24 : 42), y: small ? 20 : 27, r: small ? 11 : 15 },
     ground: [[left, front], [right, front], [right + lean, back], [left + lean, back]],
     g: { W, H: Math.ceil(top + 7 * sy + 26), bw, ox, oy, maxH, weeks, labelY: top + 7 * sy + 19 },
   };
+}
+
+// 天空：白天是太陽和雲，夜景是月亮和星星。畫在最底層，會被樓擋住
+export function backdrop(lay, pal) {
+  const { x, y, r } = lay.celestial, W = lay.g.W, out = [];
+  if (pal.night) {
+    for (let i = 0, n = Math.round(W / 16); i < n; i++) {
+      const a = pick(977, i * 3), sx = 4 + (a % (W - 8)), sy = 4 + (pick(977, i * 3 + 1) % Math.max(20, lay.top - 30));
+      if (Math.hypot(sx - x, sy - y) < r * 2.4) continue;
+      const sr = 0.5 + (a % 9) / 10;
+      out.push({ k: 'ellipse', cx: sx, cy: sy, rx: sr, ry: sr, fill: pal.star, alpha: 0.35 + (pick(977, i * 3 + 2) % 60) / 100 });
+    }
+    out.push({ k: 'ellipse', cx: x, cy: y, rx: r * 2.3, ry: r * 2.3, fill: pal.halo });
+    out.push({ k: 'ellipse', cx: x, cy: y, rx: r * 1.5, ry: r * 1.5, fill: pal.halo });
+    // 弦月：外圈大弧，內圈是圓心往右偏的另一個圓
+    const px = x + r * 0.259, dy = r * 0.966;
+    out.push({ k: 'path', d: `M${f(px)} ${f(y - dy)}A${r} ${r} 0 1 0 ${f(px)} ${f(y + dy)}A${r} ${r} 0 0 1 ${f(px)} ${f(y - dy)}Z`, fill: pal.moon, glow: pal.moon });
+  } else {
+    const s = r / 15;
+    for (const [cx, cy, k] of [[W * 0.56, y - 4 * s, 1], [W * 0.76, y + 12 * s, 0.8]]) {
+      for (const [dx, dy2, rx, ry] of [[-11, 3, 10, 6], [0, -2, 12, 8], [12, 3, 10, 6]]) {
+        out.push({ k: 'ellipse', cx: cx + dx * s * k, cy: cy + dy2 * s * k, rx: rx * s * k, ry: ry * s * k, fill: pal.cloud });
+      }
+    }
+    out.push({ k: 'ellipse', cx: x, cy: y, rx: r * 1.75, ry: r * 1.75, fill: pal.halo });
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      out.push({ k: 'line', pts: [[x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3], [x + Math.cos(a) * r * 1.62, y + Math.sin(a) * r * 1.62]], stroke: pal.ray, w: 2 * s });
+    }
+    out.push({ k: 'ellipse', cx: x, cy: y, rx: r, ry: r, fill: pal.sun });
+  }
+  return out;
 }
 
 // 一格在高度 h 時的圖形（h 會在進場動畫時從 0 長到 t.h）
@@ -180,13 +216,15 @@ const SANS = `-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sa
 const MONO = `ui-monospace,SFMono-Regular,Menlo,Consolas,monospace`;
 function emit(p) {
   if (p.k === 'rects') return `<path d="${p.rects.map(([x, y, w, h]) => `M${f(x)} ${f(y)}h${f(w)}v${f(h)}h${-f(w)}z`).join('')}" fill="${p.fill}"/>`;
-  if (p.k === 'ellipse') return `<ellipse cx="${f(p.cx)}" cy="${f(p.cy)}" rx="${f(p.rx)}" ry="${f(p.ry)}" fill="${p.fill}"/>`;
+  if (p.k === 'ellipse') return `<ellipse cx="${f(p.cx)}" cy="${f(p.cy)}" rx="${f(p.rx)}" ry="${f(p.ry)}" fill="${p.fill}"${p.alpha ? ` opacity="${f(p.alpha)}"` : ''}/>`;
+  if (p.k === 'path') return `<path d="${p.d}" fill="${p.fill}"/>`;
   const d = 'M' + p.pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L') + (p.k === 'poly' ? 'Z' : '');
   return `<path d="${d}" fill="${p.fill ?? 'none'}"${p.stroke ? ` stroke="${p.stroke}" stroke-width="${p.w || 1.5}"` : ''}/>`;
 }
 
 export function toSVG(lay, pal, { caption, label } = {}) {
-  const { g } = lay, H = g.H + (caption ? 28 : 0), el = [emit({ k: 'poly', pts: lay.ground, fill: pal.ground })];
+  const { g } = lay, H = g.H + (caption ? 28 : 0);
+  const el = [...backdrop(lay, pal).map(emit), emit({ k: 'poly', pts: lay.ground, fill: pal.ground })];
   for (const t of lay.towers) for (const p of prims(t, t.h, g, pal, { today: t.d === lay.today })) el.push(emit(p));
   for (const l of lay.labels) el.push(`<text x="${f(l.x)}" y="${g.labelY}" font-family="${MONO}" font-size="11" fill="${pal.muted}">${l.text}</text>`);
   if (caption) el.push(`<text x="4" y="${g.H + 16}" font-family="${SANS}" font-size="13" fill="${pal.ink}">${xml(caption)}</text>`);

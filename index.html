@@ -14,7 +14,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-<script>try{const t=localStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}</script>
+<script>
+  // data-theme 是使用者手動選的；data-mode 是實際生效的（沒選就跟系統）
+  try{const t=localStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}
+  document.documentElement.dataset.mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+</script>
 <style>
   :root{
     --paper:#f3eee3; --card:#fbf8f1; --ink:#1c1a17; --muted:#736b5e;
@@ -74,6 +78,14 @@
   @keyframes slide{to{transform:translateX(-50%)}}
   .ticker .rail span{white-space:nowrap; padding:0 18px; display:inline-flex; gap:8px; align-items:baseline; font-family:var(--sans)}
   .ticker .rail span::after{content:"✦"; margin-left:26px; opacity:.4}
+  /* 右上角的太陽／月亮：顯示現在的模式，點一下切換 */
+  .mode{position:absolute; right:0; top:0; bottom:0; width:46px; border:0; cursor:pointer; display:grid; place-items:center; background:var(--ink); color:#f5b83d; box-shadow:-14px 0 14px var(--ink)}
+  .mode svg{width:19px; height:19px; transition:transform .5s cubic-bezier(.2,1.5,.4,1)}
+  .mode:hover svg{transform:rotate(40deg) scale(1.15)}
+  .mode .moon, [data-mode="dark"] .mode .sun{display:none}
+  [data-mode="dark"] .mode .moon{display:block}
+  [data-mode="dark"] .mode{background:var(--card); color:#f4e9c1; box-shadow:-14px 0 14px var(--card)}
+  [data-mode="dark"] .ticker{background:var(--card); color:var(--ink); border-bottom:1px solid var(--rule)}
   .ticker b{font:500 12.5px var(--mono); opacity:.6}
   .ticker em{font:500 12.5px var(--mono); font-style:normal; color:color-mix(in srgb,var(--seal) 70%,var(--paper))}
   .ticker u{text-decoration:none; opacity:.62}
@@ -235,9 +247,6 @@
 
   footer{margin-top:56px; border-top:2px solid var(--ink); padding:18px 0 48px; display:flex; flex-wrap:wrap; gap:8px 22px; font-size:12.5px; color:var(--muted)}
   footer a:hover{color:var(--seal)}
-  footer .sp{margin-left:auto}
-  footer button{font:inherit; color:inherit; background:none; border:1px solid var(--rule); border-radius:999px; padding:1px 12px; cursor:pointer}
-  footer button:hover{color:var(--ink); border-color:var(--ink)}
   .empty{color:var(--muted); padding:40px 0; text-align:center}
 
   /* ── RWD：平板 ── */
@@ -278,7 +287,6 @@
     .old li{grid-template-columns:minmax(0,1fr) auto; gap:6px 12px}
     .old .strip{grid-column:1 / -1; order:3}
     .ticker .live{padding:0 10px 0 14px}
-    footer .sp{margin-left:0}
   }
   @media (hover:none){
     .card:hover, .anim .card.in:hover{transform:none; box-shadow:4px 4px 0 var(--rule-soft)}
@@ -293,7 +301,12 @@
 </style>
 </head>
 <body>
-<div class="ticker" aria-label="最近的開發動態"><span class="live">LIVE</span><div class="rail" id="rail"></div></div>
+<div class="ticker" aria-label="最近的開發動態"><span class="live">LIVE</span><div class="rail" id="rail"></div>
+  <button class="mode" id="theme" type="button">
+    <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><path d="M12 2.2v3M12 18.8v3M2.2 12h3M18.8 12h3M5.1 5.1l2.1 2.1M16.8 16.8l2.1 2.1M5.1 18.9l2.1-2.1M16.8 7.2l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z" fill="currentColor"/><circle cx="17.6" cy="5.2" r="1" fill="currentColor"/><circle cx="20.6" cy="9" r=".7" fill="currentColor"/></svg>
+  </button>
+</div>
 <div class="wrap">
   <section class="mast">
     <p class="kicker" id="status">Build log · 同步中</p>
@@ -334,14 +347,13 @@
   <footer>
     <span id="foot-sync"></span>
     <a href="https://github.com/chung223">GitHub @chung223</a>
-    <span class="sp"><button id="theme" type="button">切換深／淺色</button></span>
   </footer>
 </div>
 <div class="tip" id="tip" role="status"></div>
 <noscript><p class="empty">這一頁需要 JavaScript 才能載入開發紀錄。</p></noscript>
 
 <script type="module">
-import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } from './skyline.js';
+import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, PALETTES } from './skyline.js';
 
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -402,7 +414,8 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } 
 
   // ── 立體天際線：有 commit 的日子是一棟樓，沒動工的日子是綠地（圖形定義在 skyline.js）──
   const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1 };
-  const palette = () => PALETTES[getComputedStyle(document.documentElement).getPropertyValue('--glow').trim() !== 'none' ? 'dark' : 'light'];
+  const root = document.documentElement;
+  const palette = () => PALETTES[root.dataset.mode === 'dark' ? 'dark' : 'light'];
   function buildSky(animate) {
     const cv = $('sky'), W = cv.clientWidth;
     if (!W || !sky.sum) return;
@@ -422,16 +435,22 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } 
       for (const [x, y, w, h] of p.rects) ctx.fillRect(x, y, w, h);
       return;
     }
-    ctx.beginPath();
-    if (p.k === 'ellipse') ctx.ellipse(p.cx, p.cy, p.rx, p.ry, 0, 0, Math.PI * 2);
+    let path = null;
+    if (p.k === 'path') path = new Path2D(p.d);
     else {
-      p.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-      if (p.k === 'poly') ctx.closePath();
+      ctx.beginPath();
+      if (p.k === 'ellipse') ctx.ellipse(p.cx, p.cy, p.rx, p.ry, 0, 0, Math.PI * 2);
+      else {
+        p.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        if (p.k === 'poly') ctx.closePath();
+      }
     }
     if (p.fill) {
       if (p.glow) { ctx.shadowColor = p.glow; ctx.shadowBlur = 14; }
-      ctx.fillStyle = p.fill; ctx.fill();
-      ctx.shadowBlur = 0;
+      if (p.alpha) ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.fill;
+      path ? ctx.fill(path) : ctx.fill();
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
     }
     if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.lineWidth = p.w || 1.5; ctx.stroke(); }
   }
@@ -441,6 +460,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } 
     const ctx = $('sky').getContext('2d'), pal = palette();
     ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
     ctx.clearRect(0, 0, lay.g.W, lay.g.H);
+    for (const shape of backdrop(lay, pal)) paint(ctx, shape);
     paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
     for (const t of lay.towers) {
       const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
@@ -463,12 +483,29 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } 
     if (hit !== sky.hover) { sky.hover = hit; drawSky(1e9); }
     if (hit) showTip(hit.d, hit.n, true, e.clientX, r.top + hit.y - hit.h - oy);
     else tip.classList.remove('on');
+    // 太陽／月亮本身也是開關
+    const c = sky.lay.celestial;
+    sky.onOrb = !hit && Math.hypot(px - c.x, py - c.y) < c.r * 1.7;
+    $('sky').style.cursor = sky.onOrb ? 'pointer' : '';
   }
   $('sky').addEventListener('pointermove', hitSky);
   $('sky').addEventListener('pointerdown', hitSky);
+  $('sky').addEventListener('click', () => { if (sky.onOrb) toggleTheme(); });
   $('sky').addEventListener('pointerleave', () => { sky.hover = null; drawSky(1e9); tip.classList.remove('on'); });
   new ResizeObserver(() => { if (view === '3d' && sky.lay?.g.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawSky(1e9));
+  function setMode() {
+    root.dataset.mode = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    $('theme').setAttribute('aria-label', root.dataset.mode === 'dark' ? '現在是夜景，切換成白天' : '現在是白天，切換成夜景');
+    drawSky(1e9);
+  }
+  function toggleTheme() {
+    root.dataset.theme = root.dataset.mode === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('home-theme', root.dataset.theme); } catch {}
+    setMode();
+  }
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setMode);
+  $('theme').addEventListener('click', toggleTheme);
+  setMode();
 
   function setView(v, animate) {
     view = v;
@@ -650,14 +687,6 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } 
   document.addEventListener('pointermove', onPointer);
   document.addEventListener('pointerdown', onPointer);
   addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
-
-  $('theme').addEventListener('click', () => {
-    const root = document.documentElement;
-    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('home-theme', root.dataset.theme); } catch {}
-    drawSky(1e9);
-  });
 
   async function load() {
     try {
