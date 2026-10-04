@@ -413,7 +413,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   }
 
   // ── 立體天際線：有 commit 的日子是一棟樓，沒動工的日子是綠地（圖形定義在 skyline.js）──
-  const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1 };
+  const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1, tick: 0, growing: false, visible: true };
   const root = document.documentElement;
   const palette = () => PALETTES[root.dataset.mode === 'dark' ? 'dark' : 'light'];
   function buildSky(animate) {
@@ -424,9 +424,15 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     sky.hover = null;
     cv.width = W * sky.dpr; cv.height = sky.lay.g.H * sky.dpr; cv.style.height = sky.lay.g.H + 'px';
     cancelAnimationFrame(sky.raf);
+    sky.growing = false;
     if (!animate || calm) return drawSky(1e9);
     const t0 = performance.now(), end = sky.lay.g.weeks * 14 + 800;
-    const loop = (t) => { drawSky(t - t0); if (t - t0 < end) sky.raf = requestAnimationFrame(loop); };
+    sky.growing = true;
+    const loop = (t) => {
+      drawSky(t - t0);
+      if (t - t0 < end) sky.raf = requestAnimationFrame(loop);
+      else sky.growing = false;
+    };
     sky.raf = requestAnimationFrame(loop);
   }
   function paint(ctx, p) {
@@ -457,7 +463,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   function drawSky(elapsed) {
     const lay = sky.lay;
     if (!lay) return;
-    const ctx = $('sky').getContext('2d'), pal = palette();
+    const ctx = $('sky').getContext('2d'), pal = palette(), pose = 'p' + (sky.tick % 2);
     ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
     ctx.clearRect(0, 0, lay.g.W, lay.g.H);
     for (const shape of backdrop(lay, pal)) paint(ctx, shape);
@@ -465,7 +471,9 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     for (const t of lay.towers) {
       const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
       const h = t.h * (1 - (1 - p) ** 3);
-      for (const shape of prims(t, h, lay.g, pal, { today: t.d === sky.today, lit: sky.hover === t })) paint(ctx, shape);
+      for (const shape of prims(t, h, lay.g, pal, { today: t.d === sky.today, lit: sky.hover === t })) {
+        if (!shape.cls || shape.cls === pose) paint(ctx, shape);
+      }
     }
     ctx.fillStyle = pal.muted;
     ctx.font = '11px "DM Mono", monospace';
@@ -478,7 +486,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     let hit = null;
     for (let i = sky.lay.towers.length - 1; i >= 0 && !hit; i--) {
       const t = sky.lay.towers[i], top = t.y - t.h;
-      if (px >= t.x && px <= t.x + bw + ox && py >= top - oy && py <= t.y) hit = t;
+      if (!t.lot && px >= t.x && px <= t.x + bw + ox && py >= top - oy && py <= t.y) hit = t;
     }
     if (hit !== sky.hover) { sky.hover = hit; drawSky(1e9); }
     if (hit) showTip(hit.d, hit.n, true, e.clientX, r.top + hit.y - hit.h - oy);
@@ -492,6 +500,13 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   $('sky').addEventListener('pointerdown', hitSky);
   $('sky').addEventListener('click', () => { if (sky.onOrb) toggleTheme(); });
   $('sky').addEventListener('pointerleave', () => { sky.hover = null; drawSky(1e9); tip.classList.remove('on'); });
+  // 工人施工：每 0.5 秒換一個姿勢。只在看得到天際線、大樓長完之後才重畫
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { sky.visible = e.isIntersecting; }).observe($('sky'));
+  if (!calm) setInterval(() => {
+    if (view !== '3d' || document.hidden || !sky.visible || sky.growing || sky.hover) return;
+    sky.tick++;
+    drawSky(1e9);
+  }, 500);
   new ResizeObserver(() => { if (view === '3d' && sky.lay?.g.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
   function setMode() {
     root.dataset.mode = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
