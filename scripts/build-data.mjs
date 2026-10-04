@@ -319,6 +319,65 @@ assertNoLeak(feed, 'feed.xml');
 await writeFile(join(dirname(OUT), 'feed.xml'), feed);
 console.log(`feed.xml：${entries.length} 篇週報`);
 
+// ── 給搜尋引擎：sitemap.xml、robots.txt ──
+await writeFile(join(dirname(OUT), 'sitemap.xml'),
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`
+  + [site, `${site}year.html`].map((u) => `<url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join('')
+  + `</urlset>\n`);
+await writeFile(join(dirname(OUT), 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${site}sitemap.xml\n`);
+
+// ── 給 LLM：llms.txt（https://llmstxt.org 的格式），用英文寫，專案附中文名稱 ──
+const LINKEDIN = cfg.links?.linkedin;
+const peakHour = hours.indexOf(Math.max(...hours)), peakDay = weekdays.indexOf(Math.max(...weekdays));
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const activeCut = addDays(today, -30);
+const line = (p) => {
+  const name = p.en?.title && p.en.title !== p.title ? `${p.en.title} (${p.title})` : p.title;
+  const link = p.private ? `**${name}** (private)` : `[${name}](${p.site || p.repo})`;
+  const meta = [p.lang, ...(p.tags || [])].filter(Boolean).join(', ');
+  return `- ${link}: ${p.en?.summary || p.summary || 'No description.'}${meta ? ` Tech: ${meta}.` : ''} ${p.year} commits in the past year; last commit ${localDay(p.last)}.${!p.private && p.site ? ` Source: ${p.repo}` : ''}`;
+};
+const llms = `# Chung's Build Log (Chung 的開發手帳)
+
+> Personal site of Chung (GitHub: ${OWNER}), a developer who builds native iOS and macOS apps, PWAs and small tools. The site is a self-updating build log: every project is listed with a commit heatmap, its last update, and recent changes, regenerated from GitHub every 15 minutes. Times are in UTC+${TZ_OFFSET_MIN / 60} (Asia/Taipei).
+
+This file is generated on every deploy. Figures below are as of ${today}.
+
+## Contact
+
+${LINKEDIN ? `- [LinkedIn](${LINKEDIN}): the best way to reach Chung about projects, collaboration or job opportunities\n` : ''}- [GitHub](https://github.com/${OWNER}): source code for the public projects
+
+## The past 365 days
+
+- ${sum.year.toLocaleString('en-US')} commits across ${projects.length + other.count} projects
+- Active on ${sum.activeDays} of 365 days; current streak ${sum.streak} days
+- Most commits land around ${peakHour}:00 and on ${WEEKDAYS[peakDay]}s
+- Languages by number of projects: ${Object.entries(projects.reduce((m, p) => (p.lang ? { ...m, [p.lang]: (m[p.lang] || 0) + 1 } : m), {})).sort((a, b) => b[1] - a[1]).map(([l, n]) => `${l} (${n})`).join(', ')}
+
+## Active projects (commits in the last 30 days)
+
+${projects.filter((p) => localDay(p.last) >= activeCut).map(line).join('\n')}
+
+## Earlier projects
+
+${projects.filter((p) => localDay(p.last) < activeCut).map(line).join('\n') || '- None.'}
+
+## Machine-readable data
+
+- [data.json](${site}data.json): everything the site renders. Per project: title, summary, English title and summary under \`en\`, language, tags, commits per day for the past year, first and last commit dates. Public projects also carry recent commit messages. Site-wide: commits by hour of day and by weekday.
+- [feed.xml](${site}feed.xml): Atom feed with one entry per week summarizing commits per project
+- [Year in review](${site}year.html): totals, longest streak, busiest day, top projects
+
+## Notes
+
+- Projects marked private are closed-source. Only their name, one-line summary and commit counts are published; commit messages and repository URLs are not.
+- Commit counts exclude merge commits and automated commits from bots.
+- ${other.count} more private projects are counted in the totals without being listed by name.
+`;
+assertNoLeak(llms, 'llms.txt');
+await writeFile(join(dirname(OUT), 'llms.txt'), llms);
+console.log(`llms.txt ${(llms.length / 1024).toFixed(1)}KB、sitemap.xml、robots.txt`);
+
 if (process.env.GITHUB_OUTPUT && STATS_TOKEN) {
   await appendFile(process.env.GITHUB_OUTPUT, `token_expires=${tokenExpires}\n`);
 }

@@ -134,6 +134,9 @@ h1 .stamp{
 .bars i:hover{background:var(--seal)}
 .rhythm figcaption{display:flex; justify-content:space-between; font:400 11px var(--mono); color:var(--muted); padding-top:5px}
 [data-kind][hidden], #heat-key[hidden]{display:none}
+/* 部署時預先寫進網頁的靜態內容：給搜尋引擎和沒有 JavaScript 的讀者。有 JavaScript 時佔著位置但不顯示，避免閃一下 */
+.js .pre{visibility:hidden}
+.pre .links a{margin-right:10px}
 .ico{width:38px; height:38px; border-radius:9px; flex:none; object-fit:cover; background:var(--h0)}
 .ico.mono{display:grid; place-items:center; font:700 19px/1 var(--kai); color:var(--paper); background:var(--h3)}
 .seg{display:inline-flex; border:1px solid var(--ink); border-radius:999px; overflow:hidden}

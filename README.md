@@ -19,6 +19,8 @@
 | `city.js` | 首頁城市裡會動、會互動的部分：依台北時間的天空與工人作息、飛機橫幅、車、放大鏡、特效與季節彩蛋 |
 | `projects.json` | 專案的顯示名稱、簡介、標籤，以及哪些要隱藏 |
 | `scripts/build-data.mjs` | 用 GitHub API 抓各 repo 的 commit，產生 `data.json` |
+| `scripts/prerender.mjs` | 部署時把數字、專案清單、結構化資料寫進 `index.html`，給搜尋引擎與不跑 JavaScript 的讀者 |
+| `scripts/smoke-test.mjs` | 部署前用真的瀏覽器打開網站做檢查，沒過就不部署 |
 | `.github/workflows/pages.yml` | push 與排程時產生資料並部署；資料沒變就略過部署 |
 
 `data.json` 不進版控，每次部署時重新產生。同時會產生 `skyline-{light,dark}.svg` 與
@@ -69,6 +71,24 @@ commit 訊息、README 用的圖和週報不翻譯。
 3. 存成這個 repo 的 secret：`gh secret set STATS_TOKEN --repo chung223/chung223.github.io`
 
 沒有設定時網站照常運作，只是只會列出公開專案。
+
+## 給搜尋引擎與 LLM
+
+- `index.html` 在部署時會預先寫入內容與 JSON-LD（Person、WebSite、專案清單）。
+- `sitemap.xml`、`robots.txt` 每次部署重新產生。
+- `llms.txt`（[llmstxt.org](https://llmstxt.org) 的格式）：用英文寫的整站摘要，含聯絡方式、一年的統計、每個專案一行說明，以及 `data.json` 等機器可讀資料的位置。聯絡用的 LinkedIn 網址設在 `projects.json` 的 `links.linkedin`。
+
+## 測試
+
+部署前會跑 `scripts/smoke-test.mjs`：桌機中文白天、手機英文夜景、年度回顧各開一次，檢查熱力圖格子的排列、
+夜景整頁是深色、英文版沒有殘留中文或漏翻的字串、沒有錯誤訊息與缺檔、私有專案沒有外洩。本機跑法：
+
+```bash
+npm install --no-save playwright-core   # 第一次
+STATS_TOKEN="$(gh auth token)" npm run site && npm test
+```
+
+需要系統上有 Chrome。檢查不依賴最近有沒有 commit，久沒動工也要能過。
 
 ## 本機預覽
 

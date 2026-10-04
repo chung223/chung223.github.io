@@ -75,6 +75,18 @@ jobs:
           rsvg-convert -w 1200 _site/og.svg -o _site/og.png
           rm _site/og.svg
 
+      - name: Prerender for search engines and LLMs
+        if: steps.diff.outputs.skip != 'true'
+        # 把數字、專案清單、結構化資料直接寫進 index.html，不跑 JavaScript 也讀得到
+        run: node scripts/prerender.mjs _site
+
+      - name: Smoke test in a real browser
+        if: steps.diff.outputs.skip != 'true'
+        # 用 runner 上的 Chrome 實際打開組裝好的網站；沒過就不部署
+        run: |
+          npm install --no-save --silent playwright-core@1
+          node scripts/smoke-test.mjs _site
+
       - uses: actions/configure-pages@v6
         if: steps.diff.outputs.skip != 'true'
         with:
@@ -124,5 +136,5 @@ jobs:
 
           失敗的執行：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-          常見原因：\`STATS_TOKEN\` 過期或被撤銷、GitHub API 暫時異常、隱私檢查沒過。恢復正常後這個 issue 會自動關閉。"
+          常見原因：\`STATS_TOKEN\` 過期或被撤銷、GitHub API 暫時異常、隱私檢查沒過、冒煙測試沒過（看失敗那一步的輸出，會列出是哪一項）。恢復正常後這個 issue 會自動關閉。"
           fi

@@ -9,6 +9,8 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Chung 的開發手帳">
 <meta property="og:description" content="正在做的 App、PWA 與小工具，附自動更新的 commit 熱力圖與最近動態。">
+<link rel="canonical" href="https://chung223.github.io/">
+<link rel="alternate" type="text/markdown" title="llms.txt" href="llms.txt">
 <meta property="og:url" content="https://chung223.github.io/">
 <meta property="og:image" content="https://chung223.github.io/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
@@ -21,6 +23,8 @@
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@700&display=swap"></noscript>
 <script>
+  // 有 JavaScript 時，部署時預先寫進網頁的靜態內容（.pre）先藏起來，等程式畫好真正的版本再換掉
+  document.documentElement.classList.add('js');
   // data-theme 是這次造訪手動選的；data-mode 是實際生效的。沒選就照台北時間：傍晚六點半到清晨五點半是夜景
   try{const t=sessionStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}
   (()=>{const h=(Date.now()/3600000+8)%24;document.documentElement.dataset.mode=document.documentElement.dataset.theme||(h<5.5||h>=18.5?'dark':'light');})();
