@@ -35,6 +35,7 @@ export const PALETTES = {
     h: [null, '#c3d0e6', '#8ba3cf', '#4d6fb0', '#1e3d7e'], front: 0.14, side: 0.32,
     win: 'rgba(255,255,255,.62)', winPct: 62, glow: false, night: false,
     sun: '#f5b83d', ray: '#f0a72b', halo: 'rgba(245,184,61,.2)', cloud: '#dde6f1',
+    dirt: '#dcc9a2', pants: '#2f3b52',
     grass: ['#a9cf93', '#9bc486'], canopy: '#4e8d4b', canopyHi: '#7ab36c', trunk: '#7a5a3a', water: '#9cc9e8',
     ground: 'rgba(28,26,23,.11)', cell0: 'rgba(28,26,23,.08)', rule: 'rgba(28,26,23,.16)',
     seal: '#c23a22', ink: '#1c1a17', muted: '#736b5e',
@@ -43,11 +44,15 @@ export const PALETTES = {
     h: [null, '#1f2d4d', '#2c447a', '#4166b3', '#6b93e6'], front: 0.2, side: 0.45,
     win: 'rgba(255,216,138,.92)', winPct: 46, glow: true, night: true,
     moon: '#f4e9c1', halo: 'rgba(244,233,193,.1)', star: '#ffffff',
+    dirt: '#40382a', pants: '#a9b8d6',
     grass: ['#22402a', '#1d3724'], canopy: '#3c7a45', canopyHi: '#5eaa63', trunk: '#5b4630', water: '#2b5a80',
     ground: 'rgba(235,229,214,.06)', cell0: 'rgba(235,229,214,.09)', rule: 'rgba(235,229,214,.17)',
     seal: '#f0674c', ink: '#ebe5d6', muted: '#9a917f',
   },
 };
+
+// 工地的顏色白天晚上都一樣：反光背心、安全帽、圍欄
+const CREW = { vest: '#f2762e', stripe: '#ffe27a', hat: '#ffd21f', brim: '#d9a900', skin: '#f1c9a5', wood: '#8a6a45', steel: '#9aa3ad', cone: '#f08c2a', white: '#ffffff' };
 
 const shade = (hex, a) =>
   '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - a)).toString(16).padStart(2, '0')).join('');
@@ -84,11 +89,16 @@ export function layout({ total, level, today, W, weeks }) {
   const towers = [];
   for (let r = 0; r < 7; r++) for (let c = 0; c < weeks; c++) {
     const d = addDays(start, c * 7 + r);
-    if (d > today) continue;
+    const x = pad + c * pitch + (6 - r) * sx, y = top + (r + 1) * sy;
+    if (d > today) {
+      // 這週還沒到的日子：施工預定地（lot = 距離今天幾天）
+      towers.push({ d, n: 0, c, l: 0, seed: hash(d), lot: Math.round((dayMs(d) - dayMs(today)) / DAY), x, y, h: 0 });
+      continue;
+    }
     const n = total[d] || 0;
     towers.push({
       d, n, c, l: level(n), seed: hash(d),
-      x: pad + c * pitch + (6 - r) * sx, y: top + (r + 1) * sy,
+      x, y,
       h: n ? 9 + (maxH - 18) * Math.sqrt(n / peak) : 0,
     });
   }
@@ -159,7 +169,59 @@ export function prims(t, h, g, pal, flags = {}) {
     if (rects.length) out.push({ k: 'rects', rects, fill: pal.win });
   };
 
+  // 小工人：腳站在 (wx, wy)。手和工具有兩個姿勢（cls p0／p1）輪流出現，看起來就在動
+  const ws = Math.max(0.62, Math.min(1.25, bw / 13));
+  const worker = (wx, wy, tool) => {
+    const s = ws, L = (pts, stroke, w, cls) => out.push({ k: 'line', pts, stroke, w: w * s, cls });
+    L([[wx - 1.1 * s, wy], [wx - 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
+    L([[wx + 1.1 * s, wy], [wx + 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
+    out.push({ k: 'rects', rects: [[wx - 1.7 * s, wy - 7.2 * s, 3.4 * s, 4.2 * s]], fill: CREW.vest });
+    out.push({ k: 'rects', rects: [[wx - 1.7 * s, wy - 5.6 * s, 3.4 * s, 0.9 * s]], fill: CREW.stripe });
+    out.push({ k: 'ellipse', cx: wx, cy: wy - 8.5 * s, rx: 1.5 * s, ry: 1.5 * s, fill: CREW.skin });
+    out.push({ k: 'ellipse', cx: wx, cy: wy - 9.3 * s, rx: 1.9 * s, ry: 1.25 * s, fill: CREW.hat });
+    L([[wx - 2.4 * s, wy - 8.8 * s], [wx + 2.4 * s, wy - 8.8 * s]], CREW.brim, 0.9);
+    const sh = [wx + 1.4 * s, wy - 6.5 * s];
+    if (tool === 'hammer') {
+      L([sh, [wx + 3.4 * s, wy - 8.8 * s]], CREW.skin, 1.1, 'p0');
+      L([[wx + 3.4 * s, wy - 8.8 * s], [wx + 4.6 * s, wy - 10.6 * s]], CREW.wood, 0.9, 'p0');
+      L([[wx + 3.8 * s, wy - 11.2 * s], [wx + 5.4 * s, wy - 10 * s]], CREW.steel, 1.6, 'p0');
+      L([sh, [wx + 3.8 * s, wy - 5 * s]], CREW.skin, 1.1, 'p1');
+      L([[wx + 3.8 * s, wy - 5 * s], [wx + 5.6 * s, wy - 4.2 * s]], CREW.wood, 0.9, 'p1');
+      L([[wx + 6 * s, wy - 5.2 * s], [wx + 5.4 * s, wy - 3.2 * s]], CREW.steel, 1.6, 'p1');
+      out.push({ k: 'ellipse', cx: wx + 6.8 * s, cy: wy - 2.6 * s, rx: 0.9 * s, ry: 0.9 * s, fill: CREW.hat, cls: 'p1' });
+    } else {
+      L([sh, [wx + 3.2 * s, wy - 5.2 * s]], CREW.skin, 1.1, 'p0');
+      L([[wx + 2.2 * s, wy - 7.4 * s], [wx + 4.4 * s, wy - 1.6 * s]], CREW.wood, 0.9, 'p0');
+      L([[wx + 4 * s, wy - 2.4 * s], [wx + 4.9 * s, wy - 0.4 * s]], CREW.steel, 1.8, 'p0');
+      L([sh, [wx + 3.4 * s, wy - 7 * s]], CREW.skin, 1.1, 'p1');
+      L([[wx + 2.6 * s, wy - 9 * s], [wx + 5 * s, wy - 4.2 * s]], CREW.wood, 0.9, 'p1');
+      L([[wx + 4.6 * s, wy - 5 * s], [wx + 5.6 * s, wy - 3.2 * s]], CREW.steel, 1.8, 'p1');
+      out.push({ k: 'ellipse', cx: wx + 6 * s, cy: wy - 5.4 * s, rx: 1 * s, ry: 0.8 * s, fill: shade(pal.dirt, 0.25), cls: 'p1' });
+    }
+  };
+
   let roof, cx, cy;
+  if (t.lot) {
+    // 施工預定地：黃土地基。明天那一塊有工人在挖、前面擺圍欄，再往後是三角錐和土堆
+    out.push({ k: 'poly', pts: roofOf(x, y, bw, ox, oy), fill: pal.dirt });
+    cx = x + bw / 2 + ox / 2; cy = y - oy / 2;
+    const s = ws;
+    if (t.lot === 1) {
+      worker(cx - bw * 0.12, cy + oy * 0.1, 'shovel');
+      const bx = x + bw * 0.06, bwid = bw * 0.88, by = y - 5.6 * s, bh = 2.8 * s;
+      out.push({ k: 'line', pts: [[bx + 0.8, by], [bx + 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
+      out.push({ k: 'line', pts: [[bx + bwid - 0.8, by], [bx + bwid - 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
+      out.push({ k: 'rects', rects: [[bx, by, bwid, bh]], fill: CREW.cone });
+      out.push({ k: 'rects', rects: [0.12, 0.42, 0.72].map((p) => [bx + bwid * p, by, bwid * 0.15, bh]), fill: CREW.white });
+    } else if (t.lot === 2) {
+      out.push({ k: 'poly', pts: [[cx - 2.6 * s, cy + 1], [cx + 2.6 * s, cy + 1], [cx, cy - 6.5 * s]], fill: CREW.cone });
+      out.push({ k: 'line', pts: [[cx - 1.3 * s, cy - 2.4 * s], [cx + 1.3 * s, cy - 2.4 * s]], stroke: CREW.white, w: 1.2 * s });
+    } else if (t.lot === 3) {
+      out.push({ k: 'ellipse', cx, cy, rx: bw * 0.26, ry: oy * 0.34, fill: shade(pal.dirt, 0.18) });
+      out.push({ k: 'ellipse', cx: cx - 1, cy: cy - 1.6 * s, rx: bw * 0.16, ry: oy * 0.24, fill: shade(pal.dirt, 0.3) });
+    }
+    return out;
+  }
   if (!t.n) {
     // 綠地：草皮，上面隨機長一兩棵樹，偶爾是水池
     roof = roofOf(x, y, bw, ox, oy);
@@ -204,7 +266,10 @@ export function prims(t, h, g, pal, flags = {}) {
     out.push({ k: 'line', pts: [[cx, cy], [cx, top - 4]], stroke: pal.seal, w: 1.5 });
     out.push({ k: 'line', pts: [[cx - 5, top], [cx + 12, top]], stroke: pal.seal, w: 1.5 });
     out.push({ k: 'line', pts: [[cx - 5, top], [cx, top - 4], [cx + 12, top]], stroke: pal.seal, w: 0.8 });
-    out.push({ k: 'line', pts: [[cx + 10, top], [cx + 10, top + 6]], stroke: pal.seal, w: 0.8 });
+    // 吊鉤一上一下
+    out.push({ k: 'line', pts: [[cx + 10, top], [cx + 10, top + 5]], stroke: pal.seal, w: 0.8, cls: 'p0' });
+    out.push({ k: 'line', pts: [[cx + 10, top], [cx + 10, top + 8]], stroke: pal.seal, w: 0.8, cls: 'p1' });
+    worker(cx - bw * 0.3, cy + oy * 0.14, 'hammer');
   }
   return out;
 }
@@ -215,6 +280,9 @@ const xml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const SANS = `-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif`;
 const MONO = `ui-monospace,SFMono-Regular,Menlo,Consolas,monospace`;
 function emit(p) {
+  return p.cls ? shape(p).replace(/^<\w+/, (m) => `${m} class="${p.cls}"`) : shape(p);
+}
+function shape(p) {
   if (p.k === 'rects') return `<path d="${p.rects.map(([x, y, w, h]) => `M${f(x)} ${f(y)}h${f(w)}v${f(h)}h${-f(w)}z`).join('')}" fill="${p.fill}"/>`;
   if (p.k === 'ellipse') return `<ellipse cx="${f(p.cx)}" cy="${f(p.cy)}" rx="${f(p.rx)}" ry="${f(p.ry)}" fill="${p.fill}"${p.alpha ? ` opacity="${f(p.alpha)}"` : ''}/>`;
   if (p.k === 'path') return `<path d="${p.d}" fill="${p.fill}"/>`;
@@ -226,6 +294,8 @@ export function toSVG(lay, pal, { caption, label } = {}) {
   const { g } = lay, H = g.H + (caption ? 28 : 0);
   const el = [...backdrop(lay, pal).map(emit), emit({ k: 'poly', pts: lay.ground, fill: pal.ground })];
   for (const t of lay.towers) for (const p of prims(t, t.h, g, pal, { today: t.d === lay.today })) el.push(emit(p));
+  // 工人的兩個姿勢輪流顯示（README 裡的圖也會動）
+  el.unshift('<style>.p0{animation:a 1s infinite}.p1{animation:b 1s infinite}@keyframes a{0%,49.9%{opacity:1}50%,100%{opacity:0}}@keyframes b{0%,49.9%{opacity:0}50%,100%{opacity:1}}</style>');
   for (const l of lay.labels) el.push(`<text x="${f(l.x)}" y="${g.labelY}" font-family="${MONO}" font-size="11" fill="${pal.muted}">${l.text}</text>`);
   if (caption) el.push(`<text x="4" y="${g.H + 16}" font-family="${SANS}" font-size="13" fill="${pal.ink}">${xml(caption)}</text>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.W} ${H}" width="${g.W}" height="${H}" role="img" aria-label="${xml(label || '')}">${el.join('')}</svg>\n`;
