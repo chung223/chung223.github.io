@@ -110,7 +110,7 @@
   /* ── 區塊標題 ── */
   .sec{padding:30px 0 10px}
   .sec-h{display:flex; align-items:baseline; gap:14px; border-bottom:2px solid var(--ink); padding-bottom:8px; margin-bottom:20px}
-  .sec-h h2{font:700 26px/1.2 var(--kai)}
+  .sec-h h2{font:700 26px/1.2 var(--kai); white-space:nowrap}
   .sec-h .note{color:var(--muted); font-size:13px}
   .sec-h .right{margin-left:auto; color:var(--muted); font-size:12px; display:flex; align-items:center; gap:14px; white-space:nowrap}
   .seg{display:inline-flex; border:1px solid var(--ink); border-radius:999px; overflow:hidden}
@@ -134,6 +134,9 @@
   .cells i.today{outline:1.5px solid var(--seal); outline-offset:1px; animation:beat 2.2s ease-in-out infinite}
   @keyframes beat{50%{outline-offset:3px}}
   .cells i[data-d]:hover{outline:1.5px solid var(--ink); outline-offset:1px; animation:none}
+  .park{display:inline-flex; align-items:center; gap:5px}
+  .park[hidden]{display:none}
+  .park i{width:11px; height:11px; border-radius:3px; background:#9bc486; display:block}
   .legend{display:inline-flex; align-items:center; gap:3px}
   .legend i{width:11px; height:11px; border-radius:3px; display:block}
 
@@ -251,6 +254,7 @@
     .ledger div:last-child{border-right:0}
     .ledger dd{font-size:28px}
     .cols{grid-template-columns:1fr; gap:10px}
+    .sec-h{flex-wrap:wrap; gap:4px 14px}
     /* 窄版把動態收成最近三天，專案卡片才不會被擠到太下面 */
     .feed > li:nth-child(n+4){display:none}
     .old li{grid-template-columns:minmax(0,1.4fr) minmax(140px,1fr) 100px}
@@ -268,7 +272,8 @@
     .ledger dd{font-size:26px}
     .sec-h{flex-wrap:wrap; gap:4px 12px}
     .sec-h h2{font-size:23px}
-    .sec-h .right{width:100%; margin-left:0; justify-content:space-between}
+    .sec-h .right{width:100%; margin-left:0; justify-content:space-between; gap:8px}
+    .park{display:none}
     .grid{grid-template-columns:1fr}
     .old li{grid-template-columns:minmax(0,1fr) auto; gap:6px 12px}
     .old .strip{grid-column:1 / -1; order:3}
@@ -301,6 +306,7 @@
     <div class="sec-h">
       <h2>一年的痕跡</h2><span class="note" id="hm-note"></span>
       <span class="right">
+        <span id="park-key" class="park"><i></i>綠地＝沒動工</span>
         <span>少 <span class="legend"><i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span> 多</span>
         <span class="seg" role="group" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true">立體</button><button type="button" id="v2d" aria-pressed="false">平面</button></span>
       </span>
@@ -334,7 +340,9 @@
 <div class="tip" id="tip" role="status"></div>
 <noscript><p class="empty">這一頁需要 JavaScript 才能載入開發紀錄。</p></noscript>
 
-<script>
+<script type="module">
+import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, PALETTES } from './skyline.js';
+
 (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -346,9 +354,6 @@
 
   // 所有日期都用資料指定的時區（台灣）算，跟訪客所在時區無關
   const dayOf = (ms) => new Date(ms + offset * 60000).toISOString().slice(0, 10);
-  const dayMs = (d) => Date.parse(d + 'T00:00:00Z');
-  const addDays = (d, n) => new Date(dayMs(d) + n * DAY).toISOString().slice(0, 10);
-  const wdOf = (d) => new Date(dayMs(d)).getUTCDay();
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
 
   function rel(iso) {
@@ -363,15 +368,6 @@
     return dayOf(Date.parse(iso)).replaceAll('-', '/');
   }
   const exact = (iso) => new Date(Date.parse(iso) + offset * 60000).toISOString().slice(0, 16).replace('T', ' ');
-
-  // 每張卡片用同一把尺，卡片之間才能互相比較
-  const fixedLevel = (n) => (n >= 10 ? 4 : n >= 6 ? 3 : n >= 3 ? 2 : n >= 1 ? 1 : 0);
-  function quantileLevel(values) {
-    const v = values.filter(Boolean).sort((a, b) => a - b);
-    const q = (p) => v[Math.min(v.length - 1, Math.floor(v.length * p))] ?? 1;
-    const [a, b, c] = [q(0.25), q(0.5), q(0.75)];
-    return (n) => (!n ? 0 : n <= a ? 1 : n <= b ? 2 : n <= c ? 3 : 4);
-  }
 
   // weeks 週、週日起算、最後一欄是本週；未來的日子留空
   function cells(days, weeks, level, today) {
@@ -404,97 +400,64 @@
     requestAnimationFrame(step);
   }
 
-  // ── 立體天際線：每一天是一棟樓，樓高是當天的 commit 數 ──
-  const sky = { towers: [], labels: [], hover: null, raf: 0, total: {}, level: () => 0, today: '', W: 0 };
+  // ── 立體天際線：有 commit 的日子是一棟樓，沒動工的日子是綠地（圖形定義在 skyline.js）──
+  const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1 };
+  const palette = () => PALETTES[getComputedStyle(document.documentElement).getPropertyValue('--glow').trim() !== 'none' ? 'dark' : 'light'];
   function buildSky(animate) {
-    const cv = $('sky');
-    const W = cv.clientWidth;
-    if (!W) return;
-    const small = W < 640;
-    const weeks = small ? 26 : WEEKS;
-    const sx = small ? 3.2 : 5, sy = small ? 5.5 : 8;     // 每往前一排的位移
-    const maxH = small ? 96 : 150;
-    const pitch = (W - 6 * sx - 2) / weeks, bw = pitch * 0.8;
-    const ox = sx * 0.82, oy = sy * 0.82;                 // 樓的進深
-    const H = Math.ceil(maxH + 7 * sy + 28);
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px';
-    const start = addDays(sky.today, -wdOf(sky.today) - (weeks - 1) * 7);
-    let peak = 1;
-    for (let i = 0; i < weeks * 7; i++) peak = Math.max(peak, sky.total[addDays(start, i)] || 0);
-    sky.towers = [];
-    sky.labels = [];
-    let prev = '';
-    for (let c = 0; c < weeks; c++) {
-      const m = addDays(start, c * 7).slice(0, 7);
-      if (m !== prev && c < weeks - 1) sky.labels.push({ x: 1 + c * pitch, text: `${+m.slice(5)}月` });
-      prev = m;
-    }
-    // 由後排（週日）畫到前排（週六），同一排由左到右，前面的才會蓋住後面的
-    for (let r = 0; r < 7; r++) for (let c = 0; c < weeks; c++) {
-      const d = addDays(start, c * 7 + r);
-      if (d > sky.today) continue;
-      const n = sky.total[d] || 0;
-      sky.towers.push({
-        d, n, c, l: sky.level(n),
-        x: 1 + c * pitch + (6 - r) * sx, y: maxH + (r + 1) * sy + 4,
-        h: n ? 7 + (maxH - 16) * Math.sqrt(n / peak) : 0,
-      });
-    }
-    Object.assign(sky, { W, H, dpr, bw, ox, oy, hover: null, labelY: maxH + 7 * sy + 22 });
+    const cv = $('sky'), W = cv.clientWidth;
+    if (!W || !sky.sum) return;
+    sky.lay = layout({ total: sky.sum.total, level: sky.sum.level, today: sky.today, W });
+    sky.dpr = Math.min(devicePixelRatio || 1, 2);
+    sky.hover = null;
+    cv.width = W * sky.dpr; cv.height = sky.lay.g.H * sky.dpr; cv.style.height = sky.lay.g.H + 'px';
     cancelAnimationFrame(sky.raf);
     if (!animate || calm) return drawSky(1e9);
-    const t0 = performance.now(), end = weeks * 14 + 800;
+    const t0 = performance.now(), end = sky.lay.g.weeks * 14 + 800;
     const loop = (t) => { drawSky(t - t0); if (t - t0 < end) sky.raf = requestAnimationFrame(loop); };
     sky.raf = requestAnimationFrame(loop);
   }
-  function drawSky(elapsed) {
-    if (!sky.W) return;
-    const ctx = $('sky').getContext('2d');
-    const css = getComputedStyle(document.documentElement);
-    const col = [0, 1, 2, 3, 4].map((i) => css.getPropertyValue(`--h${i}`).trim());
-    const ink = css.getPropertyValue('--ink').trim(), seal = css.getPropertyValue('--seal').trim();
-    const dark = css.getPropertyValue('--glow').trim() !== 'none';
-    const { bw, ox, oy } = sky;
-    ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
-    ctx.clearRect(0, 0, sky.W, sky.H);
-    const path = (pts) => {
-      ctx.beginPath();
-      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-      ctx.closePath();
-    };
-    const face = (pts, fill, shade) => {
-      path(pts);
-      ctx.fillStyle = fill; ctx.fill();
-      if (shade) { ctx.fillStyle = `rgba(0,0,0,${shade})`; ctx.fill(); }
-    };
-    for (const t of sky.towers) {
-      const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
-      const h = t.h * (1 - (1 - p) ** 3), { x, y } = t, top = y - h;
-      const lit = sky.hover === t;
-      const roof = [[x, top], [x + bw, top], [x + bw + ox, top - oy], [x + ox, top - oy]];
-      if (h > 0.5) {
-        face([[x + bw, y], [x + bw + ox, y - oy], [x + bw + ox, top - oy], [x + bw, top]], col[t.l], dark ? 0.5 : 0.34);
-        face([[x, top], [x + bw, top], [x + bw, y], [x, y]], col[t.l], dark ? 0.26 : 0.16);
-      }
-      if (dark && t.l === 4 && h > 0.5) { ctx.shadowColor = col[4]; ctx.shadowBlur = 12; }
-      face(roof, lit ? seal : col[t.l]);
-      ctx.shadowBlur = 0;
-      if (t.d === sky.today || lit) {
-        path(roof);
-        ctx.strokeStyle = lit ? ink : seal; ctx.lineWidth = 1.5; ctx.stroke();
-      }
+  function paint(ctx, p) {
+    if (p.k === 'rects') {
+      ctx.fillStyle = p.fill;
+      for (const [x, y, w, h] of p.rects) ctx.fillRect(x, y, w, h);
+      return;
     }
-    ctx.fillStyle = css.getPropertyValue('--muted').trim();
+    ctx.beginPath();
+    if (p.k === 'ellipse') ctx.ellipse(p.cx, p.cy, p.rx, p.ry, 0, 0, Math.PI * 2);
+    else {
+      p.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      if (p.k === 'poly') ctx.closePath();
+    }
+    if (p.fill) {
+      if (p.glow) { ctx.shadowColor = p.glow; ctx.shadowBlur = 14; }
+      ctx.fillStyle = p.fill; ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.lineWidth = p.w || 1.5; ctx.stroke(); }
+  }
+  function drawSky(elapsed) {
+    const lay = sky.lay;
+    if (!lay) return;
+    const ctx = $('sky').getContext('2d'), pal = palette();
+    ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
+    ctx.clearRect(0, 0, lay.g.W, lay.g.H);
+    paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
+    for (const t of lay.towers) {
+      const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
+      const h = t.h * (1 - (1 - p) ** 3);
+      for (const shape of prims(t, h, lay.g, pal, { today: t.d === sky.today, lit: sky.hover === t })) paint(ctx, shape);
+    }
+    ctx.fillStyle = pal.muted;
     ctx.font = '11px "DM Mono", monospace';
-    for (const l of sky.labels) ctx.fillText(l.text, l.x, sky.labelY);
+    for (const l of lay.labels) ctx.fillText(l.text, l.x, lay.g.labelY);
   }
   function hitSky(e) {
+    if (!sky.lay) return;
     const r = $('sky').getBoundingClientRect();
-    const px = e.clientX - r.left, py = e.clientY - r.top, { bw, ox, oy } = sky;
+    const px = e.clientX - r.left, py = e.clientY - r.top, { bw, ox, oy } = sky.lay.g;
     let hit = null;
-    for (let i = sky.towers.length - 1; i >= 0 && !hit; i--) {
-      const t = sky.towers[i], top = t.y - t.h;
+    for (let i = sky.lay.towers.length - 1; i >= 0 && !hit; i--) {
+      const t = sky.lay.towers[i], top = t.y - t.h;
       if (px >= t.x && px <= t.x + bw + ox && py >= top - oy && py <= t.y) hit = t;
     }
     if (hit !== sky.hover) { sky.hover = hit; drawSky(1e9); }
@@ -504,13 +467,14 @@
   $('sky').addEventListener('pointermove', hitSky);
   $('sky').addEventListener('pointerdown', hitSky);
   $('sky').addEventListener('pointerleave', () => { sky.hover = null; drawSky(1e9); tip.classList.remove('on'); });
-  new ResizeObserver(() => { if (data && view === '3d' && sky.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
+  new ResizeObserver(() => { if (view === '3d' && sky.lay?.g.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawSky(1e9));
 
   function setView(v, animate) {
     view = v;
     $('sky').hidden = v !== '3d';
     $('hm-scroll').hidden = v === '3d';
+    $('park-key').hidden = v !== '3d';
     $('v3d').setAttribute('aria-pressed', v === '3d');
     $('v2d').setAttribute('aria-pressed', v !== '3d');
     if (v === '3d') buildSky(animate);
@@ -540,15 +504,10 @@
     offset = data.utcOffsetMinutes ?? 480;
     const today = dayOf(Date.now());
     const projects = data.projects;
-    const total = {};
-    for (const src of [...projects, data.other]) for (const [d, n] of Object.entries(src?.days || {})) total[d] = (total[d] || 0) + n;
-    const level = quantileLevel(Object.values(total));
+    const sum = summarize(data, today);
+    const { total, level, year, activeDays, streak } = sum;
 
     // ── 刊頭數字 ──
-    const year = projects.reduce((s, p) => s + p.year, 0) + (data.other?.year || 0);
-    const activeDays = Object.keys(total).filter((d) => d >= addDays(today, -364)).length;
-    let streak = 0;
-    for (let d = total[today] ? today : addDays(today, -1); total[d]; d = addDays(d, -1)) streak++;
     const cutoff = addDays(today, -ACTIVE_DAYS);
     const active = projects.filter((p) => dayOf(Date.parse(p.last)) >= cutoff);
     const older = projects.filter((p) => !active.includes(p));
@@ -648,7 +607,7 @@
     }).join('');
 
     tipData = { projects };
-    Object.assign(sky, { total, level, today });
+    Object.assign(sky, { sum, today });
     if (first) {
       let saved = null;
       try { saved = localStorage.getItem('home-view'); } catch {}

@@ -48,7 +48,7 @@ jobs:
 
       - name: Assemble site
         if: steps.diff.outputs.skip != 'true'
-        run: cp index.html .nojekyll _site/
+        run: cp index.html skyline.js .nojekyll _site/
 
       - uses: actions/configure-pages@v5
         if: steps.diff.outputs.skip != 'true'

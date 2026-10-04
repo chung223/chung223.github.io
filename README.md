@@ -10,11 +10,13 @@
 | 檔案 | 用途 |
 |---|---|
 | `index.html` | 首頁本體，載入 `data.json` 後在瀏覽器端畫出來 |
+| `skyline.js` | 天際線的版面與圖形，首頁（canvas）和 README 用的 SVG 共用 |
 | `projects.json` | 專案的顯示名稱、簡介、標籤，以及哪些要隱藏 |
 | `scripts/build-data.mjs` | 用 GitHub API 抓各 repo 的 commit，產生 `data.json` |
 | `.github/workflows/pages.yml` | push 與排程時產生資料並部署；資料沒變就略過部署 |
 
-`data.json` 不進版控，每次部署時重新產生。merge commit 和機器人的自動 commit 不計入。
+`data.json` 不進版控，每次部署時重新產生。同時會產生 `skyline-{light,dark}.svg` 與
+`projects-{light,dark}.svg`，給 GitHub 個人頁（`chung223/chung223` 的 README）嵌入。merge commit 和機器人的自動 commit 不計入。
 
 ## 私有專案
 
