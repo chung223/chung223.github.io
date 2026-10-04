@@ -14,6 +14,7 @@
 <meta property="og:image" content="https://chung223.github.io/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/atom+xml" title="Chung 的開發手帳 · 週報" href="feed.xml">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='5' fill='%23c23a22'/%3E%3Cg fill='%23f3eee3'%3E%3Crect x='8' y='8' width='6' height='6' rx='1'/%3E%3Crect x='18' y='8' width='6' height='6' rx='1' opacity='.55'/%3E%3Crect x='8' y='18' width='6' height='6' rx='1' opacity='.55'/%3E%3Crect x='18' y='18' width='6' height='6' rx='1'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,6 +130,26 @@
   .sec-h h2{font:700 26px/1.2 var(--kai); white-space:nowrap}
   .sec-h .note{color:var(--muted); font-size:13px}
   .sec-h .right{margin-left:auto; color:var(--muted); font-size:12px; display:flex; align-items:center; gap:14px; white-space:nowrap}
+  .chip{font:500 12px var(--sans); color:var(--ink); background:none; border:1px solid var(--rule); border-radius:999px; padding:2px 11px; cursor:pointer; white-space:nowrap}
+  .chip:hover{border-color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .chip small{opacity:.6; margin-left:3px; font:400 11px var(--mono)}
+  .chips{gap:6px !important; flex-wrap:wrap; white-space:normal !important; justify-content:flex-end}
+  .proj-key{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12.5px; color:var(--muted); margin:-8px 0 10px}
+  .proj-key[hidden]{display:none}
+  .proj-key span{display:inline-flex; align-items:center; gap:6px}
+  .proj-key i{width:11px; height:11px; border-radius:3px; display:block}
+  /* 作息：24 小時與星期的分布 */
+  .rhythm{display:grid; grid-template-columns:3.2fr 1fr; gap:36px}
+  .rhythm figure{min-width:0}
+  .bars{display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:3px; align-items:end; height:110px; border-bottom:1px solid var(--rule)}
+  .bars i{display:block; height:calc(var(--v) * 100%); min-height:2px; background:var(--h2); border-radius:4px 4px 0 0}
+  .bars i.peak{background:var(--h4); box-shadow:var(--glow)}
+  .bars i:hover{background:var(--seal)}
+  .rhythm figcaption{display:flex; justify-content:space-between; font:400 11px var(--mono); color:var(--muted); padding-top:5px}
+  [data-kind][hidden], #heat-key[hidden]{display:none}
+  .ico{width:38px; height:38px; border-radius:9px; flex:none; object-fit:cover; background:var(--h0)}
+  .ico.mono{display:grid; place-items:center; font:700 19px/1 var(--kai); color:var(--paper); background:var(--h3)}
   .seg{display:inline-flex; border:1px solid var(--ink); border-radius:999px; overflow:hidden}
   .seg button{font:500 12px var(--sans); color:var(--ink); background:none; border:0; padding:2px 13px; cursor:pointer}
   .seg button[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
@@ -191,6 +212,21 @@
   .bubble::after{content:""; position:absolute; left:50%; top:100%; margin-left:-6px; border:6px solid transparent; border-top-color:var(--ink)}
   @keyframes pop{from{opacity:0; transform:scale(.15)}}
   @keyframes popb{from{opacity:0; transform:translateX(-50%) scale(.3)}}
+  /* 平面熱力圖與卡片上的小熱力圖 */
+  .hm-scroll{overflow-x:auto; padding:4px 2px 8px; scrollbar-width:thin}
+  .hm{min-width:680px; display:grid; grid-template-columns:22px 1fr; gap:4px 6px}
+  .hm-months{grid-column:2; display:grid; grid-template-columns:repeat(var(--cols),1fr); gap:3px; font:400 11px/1 var(--mono); color:var(--muted); height:14px}
+  .hm-months span{white-space:nowrap}
+  .hm-wd{display:grid; grid-template-rows:repeat(7,1fr); gap:3px; font-size:10px; color:var(--muted); line-height:1}
+  .hm-wd span{display:flex; align-items:center}
+  .cells{display:grid; grid-auto-flow:column; grid-template-rows:repeat(7,1fr); grid-template-columns:repeat(var(--cols),1fr); gap:3px}
+  .cells i{aspect-ratio:1; border-radius:3px; background:var(--h0); display:block}
+  .cells i[data-l="1"]{background:var(--h1)} .cells i[data-l="2"]{background:var(--h2)}
+  .cells i[data-l="3"]{background:var(--h3)} .cells i[data-l="4"]{background:var(--h4); box-shadow:var(--glow)}
+  .cells i.void{visibility:hidden}
+  .cells i.today{outline:1.5px solid var(--seal); outline-offset:1px; animation:beat 2.2s ease-in-out infinite}
+  @keyframes beat{50%{outline-offset:3px}}
+  .cells i[data-d]:hover{outline:1.5px solid var(--ink); outline-offset:1px; animation:none}
   .park{display:inline-flex; align-items:center; gap:5px}
   .park[hidden]{display:none}
   .park i{width:11px; height:11px; border-radius:3px; background:#9bc486; display:block}
@@ -314,6 +350,7 @@
     /* 窄版把動態收成最近三天，專案卡片才不會被擠到太下面 */
     .feed > li:nth-child(n+4){display:none}
     .old li{grid-template-columns:minmax(0,1.4fr) minmax(140px,1fr) 100px}
+    .rhythm{gap:24px}
     .old .w{display:none}
   }
   /* ── RWD：手機 ── */
@@ -331,6 +368,10 @@
     .sec-h .right{width:100%; margin-left:0; justify-content:space-between; gap:8px}
     .park{display:none}
     .grid{grid-template-columns:1fr}
+    .rhythm{grid-template-columns:1fr; gap:22px}
+    .rhythm figure:last-child .bars{height:70px}
+    .chips{justify-content:flex-start}
+    #by-proj{order:3}
     .old li{grid-template-columns:minmax(0,1fr) auto; gap:6px 12px}
     .old .strip{grid-column:1 / -1; order:3}
     .ticker .live{padding:0 10px 0 14px}
@@ -369,10 +410,12 @@
       <h2>一年的痕跡</h2><span class="note" id="hm-note"></span>
       <span class="right">
         <span id="park-key" class="park"><i></i>綠地＝沒動工</span>
-        <span>少 <span class="legend"><i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span> 多</span>
+        <button type="button" class="chip" id="by-proj" aria-pressed="false">依專案上色</button>
+        <span id="heat-key">少 <span class="legend"><i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span> 多</span>
         <span class="seg" role="group" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true">立體</button><button type="button" id="v2d" aria-pressed="false">平面</button></span>
       </span>
     </div>
+    <div class="proj-key" id="proj-key" hidden></div>
     <div class="sky-wrap" id="sky-wrap">
       <canvas id="sky" role="img"></canvas>
       <div class="air" aria-hidden="true">
@@ -389,13 +432,21 @@
     <div class="hm-scroll" id="hm-scroll" hidden><div class="hm" id="hm" role="img"></div></div>
   </section>
 
+  <section class="sec">
+    <div class="sec-h"><h2>都幾點動工</h2><span class="note" id="rhythm-note"></span></div>
+    <div class="rhythm">
+      <figure><div class="bars" id="hours" role="img"></div><figcaption><span>0 點</span><span>6</span><span>12</span><span>18</span><span>23</span></figcaption></figure>
+      <figure><div class="bars" id="weekdays" role="img"></div><figcaption><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></figcaption></figure>
+    </div>
+  </section>
+
   <div class="cols">
     <section class="sec">
       <div class="sec-h"><h2>最近動態</h2></div>
       <ol class="feed" id="feed"></ol>
     </section>
     <section class="sec">
-      <div class="sec-h"><h2>進行中的專案</h2><span class="note">30 天內有更新</span></div>
+      <div class="sec-h"><h2>進行中的專案</h2><span class="note">30 天內有更新</span><span class="right chips" id="filters" role="group" aria-label="篩選專案"></span></div>
       <div class="grid" id="active"></div>
     </section>
   </div>
@@ -407,6 +458,8 @@
 
   <footer>
     <span id="foot-sync"></span>
+    <a href="year.html">年度回顧</a>
+    <a href="feed.xml">週報 RSS</a>
     <a href="https://github.com/chung223">GitHub @chung223</a>
   </footer>
 </div>
@@ -483,7 +536,40 @@ import { createCity } from './city.js';
     : (((Date.now() / 3600000 + offset / 60) % 24) + 24) % 24);
   if (['night', 'overtime', 'off', 'fireworks'].some((k) => demo.has(k))) root.dataset.theme = 'dark';
   if (['day', 'lunch', 'dusk'].some((k) => demo.has(k))) root.dataset.theme = 'light';
-  const city = createCity({ demo, hour: taipeiHour, showTip, hideTip: () => tip.classList.remove('on'), toggleTheme, pickDay: openDay, rel });
+  let sky = '', note = '';
+  const setNote = () => { $('hm-note').textContent = note + (sky ? ` · 台北現在${sky}` : ''); };
+  const city = createCity({
+    demo, hour: taipeiHour, showTip, hideTip: () => tip.classList.remove('on'), toggleTheme, pickDay: openDay, rel,
+    onWeather: (label) => { sky = label; setNote(); },
+  });
+  $('by-proj').addEventListener('click', () => {
+    const on = $('by-proj').getAttribute('aria-pressed') !== 'true';
+    $('by-proj').setAttribute('aria-pressed', on);
+    $('heat-key').hidden = on;
+    city.setColorBy(on);
+  });
+
+  // 專案篩選：App（iOS／macOS）、Web（網站與 PWA）、其他；公開或非公開
+  const kindOf = (p) => {
+    const t = `${(p.tags || []).join(' ')} ${p.lang || ''}`;
+    return /iOS|iPadOS|macOS|Swift/.test(t) ? 'app' : /PWA|Web|LINE|遊戲|HTML|JavaScript|TypeScript|PHP|Vue/.test(t) ? 'web' : 'other';
+  };
+  const FILTERS = [['all', '全部'], ['app', 'App'], ['web', 'Web'], ['other', '其他'], ['public', '公開'], ['private', '非公開']];
+  const passes = (el, f) => f === 'all' || el.dataset.kind === f || el.dataset.vis === f;
+  let filter = 'all';
+  function applyFilter() {
+    const els = [...document.querySelectorAll('[data-kind]')];
+    for (const el of els) el.hidden = !passes(el, filter);
+    $('filters').innerHTML = FILTERS.map(([k, label]) => [k, label, els.filter((el) => passes(el, k)).length])
+      .filter(([k, , n]) => n || k === filter)
+      .map(([k, label, n]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${k === filter}">${label}<small>${n}</small></button>`).join('');
+    $('old-sec').hidden = !els.some((el) => el.closest('#old') && !el.hidden);
+    $('none').hidden = els.some((el) => el.closest('#active') && !el.hidden);
+  }
+  $('filters').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-f]');
+    if (b) { filter = b.dataset.f; applyFilter(); reveal(); }
+  });
   function setMode() {
     const h = taipeiHour();
     root.dataset.mode = root.dataset.theme || (h < 5.5 || h >= 18.5 ? 'dark' : 'light');
@@ -578,7 +664,8 @@ import { createCity } from './city.js';
       : `資料每 15 分鐘自動同步 · 上次更新 ${exact(data.generatedAt)}`;
     $('foot-sync').classList.toggle('stale', staleHours >= 14);
     const privCount = projects.filter((p) => p.private).length + (data.other?.count || 0);
-    $('hm-note').textContent = `所有專案加總${privCount ? ` · 含 ${privCount} 個非公開專案` : ''}`;
+    note = `所有專案加總${privCount ? ` · 含 ${privCount} 個非公開專案` : ''}`;
+    setNote();
 
     // ── 平面熱力圖 ──
     const start = addDays(today, -wdOf(today) - (WEEKS - 1) * 7);
@@ -634,18 +721,20 @@ import { createCity } from './city.js';
         : `<ul>${p.recent.slice(0, 3).map((c) => `<li><time>${md(dayOf(Date.parse(c.t)))}</time><span title="${esc(c.m)}">${esc(c.m)}</span></li>`).join('')}</ul>`;
       const tags = [p.lang, ...(p.tags || [])].filter(Boolean);
       const heat = fixedLevel(Math.ceil(week / 3));
-      return `<article class="card rv"${heat ? ` style="--heat:var(--h${heat})"` : ''}>
-        <header><h3>${esc(p.title)}</h3>${links}</header>
+      const initial = esc([...p.title][0]);
+      const mono = `<span class="ico mono" aria-hidden="true">${initial}</span>`;
+      const ico = p.icon ? `<img class="ico" src="${esc(p.icon)}" alt="" loading="lazy" data-mono="${initial}">` : mono;
+      return `<article class="card rv" data-kind="${kindOf(p)}" data-vis="${p.private ? 'private' : 'public'}"${heat ? ` style="--heat:var(--h${heat})"` : ''}>
+        <header>${ico}<h3>${esc(p.title)}</h3>${links}</header>
         ${p.summary ? `<p class="sum">${esc(p.summary)}</p>` : ''}
         <div class="cells" style="--cols:${MINI_WEEKS}" role="img" aria-label="${esc(p.title)} 近半年的 commit 熱力圖">${cells(p.days, MINI_WEEKS, fixedLevel, today)}</div>
         <div class="nums"><span${week >= 10 ? ' class="hot"' : ''}><b>${week}</b>近 7 天</span><span><b>${p.year}</b>近一年</span><span><b>${p.total}</b>累計</span></div>
         <div class="log"><h4>最後更新 <time data-rel="${esc(p.last)}" title="${exact(p.last)}">${rel(p.last)}</time></h4>${log}</div>
         ${tags.length ? `<div class="tags">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
       </article>`;
-    }).join('') || '<p class="empty">最近 30 天沒有更新的專案</p>';
+    }).join('') + '<p class="empty" id="none" hidden>沒有符合的專案</p>';
 
     // ── 較早的專案：一格一週 ──
-    $('old-sec').hidden = !older.length;
     $('old').innerHTML = older.map((p) => {
       const weeks = Array(WEEKS).fill(0);
       for (const [d, n] of Object.entries(p.days)) {
@@ -653,7 +742,7 @@ import { createCity } from './city.js';
         if (w >= 0 && w < WEEKS) weeks[w] += n;
       }
       const name = p.private ? `${esc(p.title)}<span class="seal">非公開</span>` : `<a href="${esc(p.site || p.repo)}">${esc(p.title)} ↗</a>`;
-      return `<li class="rv">
+      return `<li class="rv" data-kind="${kindOf(p)}" data-vis="${p.private ? 'private' : 'public'}">
         <div><div class="t">${name}</div><div class="s">${esc(p.summary)}</div></div>
         <div class="strip" aria-hidden="true">${weeks.map((n) => `<i data-l="${fixedLevel(Math.ceil(n / 2))}"></i>`).join('')}</div>
         <div class="c">${p.total}<small> commits</small></div>
@@ -661,6 +750,23 @@ import { createCity } from './city.js';
       </li>`;
     }).join('');
 
+    // ── 都幾點動工 ──
+    const bars = (values, label) => {
+      const max = Math.max(1, ...values);
+      return values.map((v, i) => `<i style="--v:${(v / max).toFixed(3)}"${v === max ? ' class="peak"' : ''} data-tip="<b>${label(i)}</b> · ${v} 個 commit"></i>`).join('');
+    };
+    const hours = data.hours || [], wds = data.weekdays || [];
+    $('hours').innerHTML = bars(hours, (h) => `${h}:00–${h}:59`);
+    $('weekdays').innerHTML = bars(wds, (d) => `星期${WD[d]}`);
+    if (hours.length) {
+      const peakH = hours.indexOf(Math.max(...hours)), peakD = wds.indexOf(Math.max(...wds));
+      const part = peakH < 5 ? '凌晨' : peakH < 12 ? '早上' : peakH < 18 ? '下午' : '晚上';
+      $('rhythm-note').textContent = `最常在${part} ${peakH > 12 ? peakH - 12 : peakH} 點動工 · 最忙的是星期${WD[peakD]}`;
+      $('hours').setAttribute('aria-label', `一天 24 小時的 commit 分布，高峰在 ${peakH} 點`);
+      $('weekdays').setAttribute('aria-label', `一週七天的 commit 分布，高峰在星期${WD[peakD]}`);
+    }
+
+    applyFilter();
     tipData = { projects };
     if (first) {
       let saved = null;
@@ -693,9 +799,15 @@ import { createCity } from './city.js';
   }
   function onPointer(e) {
     if (e.target.id === 'sky') return;
-    const el = e.target.closest?.('i[data-d]');
+    const el = e.target.closest?.('i[data-d]'), bar = e.target.closest?.('[data-tip]');
     if (el) showTip(el.dataset.d, +el.dataset.n, el.parentElement.dataset.scope === 'all', e.clientX, e.clientY);
-    else tip.classList.remove('on');
+    else if (bar) {
+      tip.innerHTML = bar.dataset.tip;
+      tip.classList.add('on');
+      const r = tip.getBoundingClientRect();
+      tip.style.left = Math.max(8, Math.min(e.clientX - r.width / 2, innerWidth - r.width - 8)) + 'px';
+      tip.style.top = e.clientY - r.height - 14 + 'px';
+    } else tip.classList.remove('on');
     const card = e.target.closest?.('.card');
     if (card) {
       const r = card.getBoundingClientRect();
@@ -703,6 +815,11 @@ import { createCity } from './city.js';
       card.style.setProperty('--my', `${e.clientY - r.top}px`);
     }
   }
+  // 圖示載不到就換成專案名稱的第一個字
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (img.matches?.('img.ico')) img.replaceWith(Object.assign(document.createElement('span'), { className: 'ico mono', textContent: img.dataset.mono }));
+  }, true);
   document.addEventListener('pointermove', onPointer);
   document.addEventListener('pointerdown', onPointer);
   addEventListener('scroll', () => { tip.classList.remove('on'); closeDay(); }, { passive: true });

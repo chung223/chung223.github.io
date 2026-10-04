@@ -96,6 +96,22 @@ async function history(name) {
   );
 }
 
+// 從公開網站的 HTML 找圖示（apple-touch-icon 優先），找不到就算了
+async function findIcon(site) {
+  try {
+    const res = await fetch(site, { signal: AbortSignal.timeout(6000), headers: { 'user-agent': `${OWNER}-homepage` } });
+    if (!res.ok) return null;
+    const html = (await res.text()).slice(0, 60_000);
+    const links = [...html.matchAll(/<link\b[^>]*>/gi)].map((m) => m[0]);
+    const pick = (re) => links.find((l) => re.test(l))?.match(/href\s*=\s*["']([^"']+)["']/i)?.[1];
+    const href = pick(/rel\s*=\s*["'][^"']*apple-touch-icon/i) || pick(/rel\s*=\s*["'][^"']*\bicon\b/i);
+    if (!href || href.startsWith('data:')) return null;
+    return new URL(href, res.url).href;
+  } catch {
+    return null;
+  }
+}
+
 const localDay = (iso) =>
   new Date(Date.parse(iso) + TZ_OFFSET_MIN * 60_000).toISOString().slice(0, 10);
 
@@ -130,20 +146,28 @@ const selected = repos.flatMap((repo) => {
   return [{ repo, entry }];
 });
 
+const hours = Array(24).fill(0), weekdays = Array(7).fill(0);
 const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
   const commits = await history(repo.name);
   if (!commits.length) return null;
   const days = {}, log = {};
   let year = 0;
   for (const c of commits) {
-    if (Date.parse(c.committedDate) >= yearAgo) year++;
+    const ms = Date.parse(c.committedDate);
+    if (ms >= yearAgo) {
+      year++;
+      // 幾點、星期幾動工：只留全部專案加總的分布，不分專案
+      const local = new Date(ms + TZ_OFFSET_MIN * 60_000);
+      hours[local.getUTCHours()]++;
+      weekdays[local.getUTCDay()]++;
+    }
     const d = localDay(c.committedDate);
     if (d < firstDay) continue;
     days[d] = (days[d] || 0) + 1;
     // 每天留最新的幾筆訊息，點大樓時列出來（只有公開 repo 會輸出）
     if ((log[d] ||= []).length < LOG_PER_DAY) log[d].push(c.messageHeadline.slice(0, 100));
   }
-  const stats = { total: commits.length, year, last: commits[0].committedDate, days };
+  const stats = { total: commits.length, year, last: commits[0].committedDate, first: localDay(commits.at(-1).committedDate), days };
   if (entry.aggregateOnly) return { aggregateOnly: true, ...stats };
 
   const project = {
@@ -154,6 +178,7 @@ const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
     tags: entry.tags || [],
     ...stats,
   };
+  if (entry.icon) project.icon = entry.icon;
   if (repo.private) {
     if (entry.url) project.site = entry.url;
   } else {
@@ -164,6 +189,8 @@ const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
         : `https://${OWNER}.github.io/${repo.name}/`;
     const site = entry.url || repo.homepage || (repo.has_pages ? pages : undefined);
     if (site && site !== repo.html_url) project.site = site;
+    if (project.site && !project.icon) project.icon = await findIcon(project.site);
+    if (!project.icon) delete project.icon;
     project.recent = commits
       .slice(0, RECENT_COMMITS)
       .map((c) => ({ t: c.committedDate, m: c.messageHeadline.slice(0, 140) }));
@@ -185,11 +212,11 @@ for (const p of built.filter((p) => p?.aggregateOnly)) {
   for (const [d, n] of Object.entries(p.days)) other.days[d] = (other.days[d] || 0) + n;
 }
 
-const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, projects, other };
+const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, projects, other, hours, weekdays };
 // 生日（MM-DD，可不設）：當天首頁會飄氣球
 if (cfg.birthday) body.birthday = cfg.birthday;
 // ── 部署前的最後一關：私有專案不該帶的東西一樣都不能出現，有就直接失敗、不部署 ──
-const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'days', 'site']);
+const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'first', 'days', 'site', 'icon']);
 const privateUrls = selected.filter(({ repo }) => repo.private).map(({ repo }) => repo.html_url);
 function assertNoLeak(text, where) {
   const hit = privateUrls.find((u) => text.includes(u));
@@ -250,6 +277,43 @@ await writeFile(join(dirname(OUT), 'og.svg'), ogSVG(
     stats: `近一年 ${sum.year.toLocaleString('en-US')} 個 commit · ${sum.activeDays} 天有動工 · 連續 ${sum.streak} 天`,
   },
 ));
+
+// ── 週報（Atom）：最近八個完整的週（週一到週日），每週一篇 ──
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const site = `https://${OWNER}.github.io/`;
+const monday = addDays(today, -((wdOf(today) + 6) % 7));   // 本週一；本週還沒過完，不出
+const entries = [];
+for (let w = 1; w <= 8; w++) {
+  const from = addDays(monday, -7 * w), to = addDays(from, 6);
+  const inWeek = (d) => d >= from && d <= to;
+  const rowsOfWeek = projects
+    .map((p) => ({
+      p,
+      n: Object.entries(p.days).reduce((s, [d, n]) => s + (inWeek(d) ? n : 0), 0),
+      msgs: p.private ? [] : Object.entries(p.log || {}).filter(([d]) => inWeek(d)).sort().reverse().flatMap(([, m]) => m).slice(0, 3),
+    }))
+    .filter((r) => r.n)
+    .sort((a, b) => b.n - a.n);
+  const hidden = Object.entries(other.days).reduce((s, [d, n]) => s + (inWeek(d) ? n : 0), 0);
+  const count = rowsOfWeek.reduce((s, r) => s + r.n, 0) + hidden;
+  if (!count) continue;
+  const items = rowsOfWeek.map((r) =>
+    `<li><b>${esc(r.p.title)}</b>${r.p.private ? '（非公開）' : ''}：${r.n} 個 commit${r.msgs.length ? `<br>${r.msgs.map(esc).join('<br>')}` : ''}</li>`);
+  if (hidden) items.push(`<li>其他非公開專案：${hidden} 個 commit</li>`);
+  const range = `${+from.slice(5, 7)}/${+from.slice(8)}–${+to.slice(5, 7)}/${+to.slice(8)}`;
+  entries.push(
+    `<entry><id>tag:${OWNER}.github.io,${from.slice(0, 4)}:week-${from}</id>`
+    + `<title>${range} 週報：${count} 個 commit、${rowsOfWeek.length} 個專案</title>`
+    + `<updated>${addDays(to, 1)}T00:00:00+08:00</updated><link href="${site}"/>`
+    + `<content type="html">${esc(`<p>${range} 這一週共 ${count} 個 commit，動了 ${rowsOfWeek.length} 個專案。</p><ul>${items.join('')}</ul>`)}</content></entry>`,
+  );
+}
+const feed = `<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>Chung 的開發手帳 · 週報</title>`
+  + `<id>${site}feed.xml</id><link href="${site}"/><link rel="self" href="${site}feed.xml"/>`
+  + `<updated>${monday}T00:00:00+08:00</updated><author><name>Chung</name></author>${entries.join('')}</feed>\n`;
+assertNoLeak(feed, 'feed.xml');
+await writeFile(join(dirname(OUT), 'feed.xml'), feed);
+console.log(`feed.xml：${entries.length} 篇週報`);
 
 if (process.env.GITHUB_OUTPUT && STATS_TOKEN) {
   await appendFile(process.env.GITHUB_OUTPUT, `token_expires=${tokenExpires}\n`);

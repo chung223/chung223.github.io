@@ -22,9 +22,13 @@ const LINES = {
   shovel: () => ['嗨！明天的地基我先挖 👋', '這塊地明天要蓋多高？', '等等，好像挖到 bug 了 🐛', '地基打穩，重構才不會垮'],
   lunch: () => ['午休中，便當真香 🍱', '吃飽再 commit'],
   overtime: () => ['加班中…先別吵 🌙', '這個 bug 修完就下班'],
+  rain: () => ['下雨天，撐傘監工 ☔', '雨這麼大，水泥不會乾'],
 };
 
-export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay, rel }) {
+// 台北的即時天氣（Open-Meteo，免金鑰）
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=25.04&longitude=121.53&current=weather_code,wind_speed_10m,cloud_cover';
+
+export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay, rel, onWeather }) {
   const root = document.documentElement;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cv = $('sky'), fx = $('fx');
@@ -32,7 +36,10 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     lay: null, sum: null, data: null, today: '', active: false, visible: true,
     hover: null, crew: [], orb: null, shift: 'work', dpr: 1, raf: 0, tick: 0, growing: false,
     lens: null, wave: 0, said: {}, cheerUntil: 0, grow: null,
+    colorBy: false, owner: {}, top: [],
   };
+  // rain：0 沒雨、1 下雨、2 大雨；cloud：0–1 雲量
+  const weather = { rain: 0, thunder: false, typhoon: false, cloud: 0 };
   const palette = () => PALETTES[root.dataset.mode === 'dark' ? 'dark' : 'light'];
   const isNightHour = (h) => h < 5.5 || h >= 18.5;
 
@@ -49,9 +56,12 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     const last = S.data?.projects[0]?.last;
     const fresh = last && Date.now() - Date.parse(last) < 2 * 3600e3;
     const shift = demo.has('overtime') ? 'overtime' : demo.has('off') ? 'off'
+      : weather.typhoon ? 'storm'
       : h >= 12 && h < 13 ? 'lunch'
-      : isNightHour(h) ? (fresh ? 'overtime' : 'off') : 'work';
-    return { orb, dusk, shift };
+      : isNightHour(h) ? (fresh ? 'overtime' : 'off')
+      : weather.rain ? 'rain' : 'work';
+    const overcast = weather.rain ? 1 : weather.cloud > 0.8 ? 0.5 : 0;
+    return { orb, dusk: overcast ? 0 : dusk, shift, overcast };
   }
 
   function paint(ctx, p) {
@@ -126,7 +136,12 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, lay.g.W, lay.top);
     }
-    for (const p of backdrop(lay, pal, { orb: sc.orb, warm: sc.dusk })) paint(ctx, p);
+    if (sc.overcast === 1) {
+      // 下雨：天空壓一層灰
+      ctx.fillStyle = pal.night ? 'rgba(20,26,40,.35)' : 'rgba(110,122,138,.2)';
+      ctx.fillRect(0, 0, lay.g.W, lay.top);
+    }
+    for (const p of backdrop(lay, pal, { orb: sc.orb, warm: sc.dusk, overcast: sc.overcast })) paint(ctx, p);
     paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
     for (const p of roadPrims(lay, pal)) paint(ctx, p);
     const crew = [], cheer = now < S.cheerUntil;
@@ -138,7 +153,9 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
         const q = Math.min(1, (now - S.grow.t0) / S.grow.dur);
         h = S.grow.from + (t.h - S.grow.from) * (1 - (1 - q) ** 3);
       }
-      for (const shape of prims(t, h, lay.g, pal, { today: isToday, lit: S.hover === t, crew, shift: sc.shift, cheer })) {
+      const who = S.colorBy && t.n ? S.owner[t.d] : undefined;
+      const color = who === undefined ? undefined : who >= 0 ? pal.proj[who] : pal.projOther;
+      for (const shape of prims(t, h, lay.g, pal, { today: isToday, lit: S.hover === t, crew, shift: sc.shift, cheer, color })) {
         if (!shape.cls || shape.cls === pose) paint(ctx, shape);
       }
     }
@@ -186,7 +203,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     lens.style.width = lens.style.height = D + 'px';
     lens.style.left = Math.max(0, Math.min(W - D, w.x - D - 14)) + 'px';
     lens.style.top = Math.min(S.lay.g.H - D, w.y - 6 * w.s - D * 0.6) + 'px';
-    const kind = S.shift === 'lunch' || S.shift === 'overtime' ? S.shift : w.tool;
+    const kind = ['lunch', 'overtime', 'rain'].includes(S.shift) ? S.shift : w.tool;
     const lines = LINES[kind](S.sum.total[S.today] || 0), i = S.said[kind] || 0;
     S.said[kind] = i + 1;
     $('bubble').textContent = lines[i % lines.length];
@@ -229,7 +246,10 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     const { road, g } = S.lay, el = $('road');
     let week = 0;
     for (let i = 0; i < 7; i++) week += S.sum.total[addDays(S.today, -i)] || 0;
-    const n = Math.max(1, Math.min(7, Math.round(week / 12)));
+    // 尖峰時段：現在如果是一年裡最常動工的三個鐘頭之一，車子加倍
+    const busiest = (S.data.hours || []).map((v, h) => [v, h]).sort((a, b) => b[0] - a[0]).slice(0, 3).map((x) => x[1]);
+    const rush = busiest.includes(Math.floor(hour()));
+    const n = Math.max(1, Math.min(7, Math.round(week / 12))) * (rush ? 2 : 1);
     const width = road.x1 - road.x0, lanes = g.W < 640 ? [1] : [1, road.h - 6];
     Object.assign(el.style, { left: road.x0 + 'px', width: width + 'px', top: road.y + 'px', height: road.h + 'px' });
     el.style.setProperty('--w', width + 'px');
@@ -237,7 +257,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     if (el.dataset.k === key) return;
     el.dataset.k = key;
     el.innerHTML = Array.from({ length: n }, (_, i) => {
-      const rev = lanes.length > 1 && i % 2, dur = 11 + ((i * 37) % 13);
+      const rev = lanes.length > 1 && i % 2, dur = (rush ? 16 : 11) + ((i * 37) % 13);   // 塞車時開得慢
       return `<i class="car${rev ? ' rev' : ''}" style="--c:${CAR_COLORS[i % CAR_COLORS.length]};--dur:${dur}s;--delay:${-((i * 4.7) % dur).toFixed(1)}s;top:${rev ? lanes[1] : lanes[0]}px"></i>`;
     }).join('');
   }
@@ -265,10 +285,11 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
 
   // ── 特效圖層：冬天下雪、連續動工每滿七天的晚上放煙火、新 commit 的彩帶 ──
   const P = [];
-  let fxRaf = 0, fxLast = 0, nextBurst = 0, flakes = 0;
+  let fxRaf = 0, fxLast = 0, nextBurst = 0, flakes = 0, drops = 0, flash = 0, nextFlash = 0;
   const effects = () => {
     const month = +S.today.slice(5, 7), streak = S.sum?.streak || 0;
     return {
+      rain: weather.rain, thunder: weather.thunder,
       snow: demo.has('snow') || month === 12 || month <= 2,
       fireworks: root.dataset.mode === 'dark' && (demo.has('fireworks') || (streak > 0 && streak % 7 === 0)),
     };
@@ -298,14 +319,34 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       flakes++;
       P.push({ k: 'snow', x: Math.random() * W, y: -3, vy: 0.35 + Math.random() * 0.6, r: 0.8 + Math.random() * 1.4, sway: Math.random() * 6 });
     }
+    for (let i = 0; fxs.rain && i < fxs.rain * 3 && drops < (W / 5) * fxs.rain; i++) {
+      drops++;
+      P.push({ k: 'rain', x: Math.random() * (W + 40), y: -8, vy: 6.5 + Math.random() * 3 });
+    }
+    if (fxs.thunder && t > nextFlash) { flash = 1; nextFlash = t + 3500 + Math.random() * 6000; }
     if (fxs.fireworks && t > nextBurst) {
       burst(W * (0.12 + Math.random() * 0.76), 14 + Math.random() * (S.lay.top * 0.5));
       nextBurst = t + 700 + Math.random() * 1500;
     }
     ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    if (flash > 0.02) {
+      // 閃電
+      ctx.fillStyle = `rgba(255,255,255,${0.42 * flash})`;
+      ctx.fillRect(0, 0, W, S.lay.road.y);
+      flash *= 0.86 ** dt;
+    }
     for (let i = P.length - 1; i >= 0; i--) {
       const p = P[i];
+      if (p.k === 'rain') {
+        p.y += p.vy * dt; p.x -= 1.6 * dt;
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = root.dataset.mode === 'dark' ? '#a9c4ff' : '#6f8fb8';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + 1.8, p.y - 7); ctx.stroke();
+        if (p.y > S.lay.road.y + 4 || !fxs.rain) { P.splice(i, 1); drops--; }
+        continue;
+      }
       if (p.k === 'snow') {
         p.y += p.vy * dt; p.sway += 0.03 * dt;
         ctx.globalAlpha = 0.85;
@@ -329,7 +370,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       if (p.life <= 0) P.splice(i, 1);
     }
     ctx.globalAlpha = 1;
-    if (P.length || fxs.snow || fxs.fireworks) fxRaf = requestAnimationFrame(fxLoop);
+    if (P.length || fxs.snow || fxs.fireworks || fxs.rain || flash > 0.02) fxRaf = requestAnimationFrame(fxLoop);
   }
   function fxKick() {
     if (fxRaf || calm) return;
@@ -359,6 +400,55 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     fxKick();
   }
 
+  // ── 台北現在的天氣：下雨就下雨、打雷就閃電、颱風天工人停工 ──
+  async function loadWeather() {
+    try {
+      let code = 0, wind = 0, cloud = 0;
+      if (demo.has('typhoon')) [code, wind] = [65, 90];
+      else if (demo.has('storm')) code = 95;
+      else if (demo.has('rain')) code = 61;
+      else {
+        const c = (await (await fetch(WEATHER_URL)).json()).current;
+        [code, wind, cloud] = [c.weather_code, c.wind_speed_10m, c.cloud_cover / 100];
+      }
+      const wet = (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95;
+      Object.assign(weather, {
+        rain: !wet ? 0 : [65, 67, 82].includes(code) || code >= 95 ? 2 : 1,
+        thunder: code >= 95,
+        typhoon: wet && wind >= 62,   // 八級風以上又下雨
+        cloud,
+      });
+      onWeather?.(weather.typhoon ? '颱風天 🌀' : weather.thunder ? '雷雨 ⛈️' : weather.rain === 2 ? '大雨 🌧️' : weather.rain ? '下雨 ☔' : cloud > 0.8 ? '陰天 ☁️' : '');
+      draw();
+      fxKick();
+    } catch {
+      // 天氣抓不到就當晴天
+    }
+  }
+  loadWeather();
+  setInterval(loadWeather, 15 * 60000);
+
+  // ── 依專案上色：commit 最多的六個專案各一個顏色，每棟樓塗上當天最主要那個專案的顏色 ──
+  function assignOwners() {
+    S.top = [...S.data.projects].sort((a, b) => b.year - a.year).slice(0, 6);
+    S.owner = {};
+    for (const d of Object.keys(S.sum.total)) {
+      let best = null;
+      for (const p of S.data.projects) if (p.days[d] && (!best || p.days[d] > best.days[d])) best = p;
+      S.owner[d] = best ? S.top.indexOf(best) : -1;
+    }
+  }
+  function drawLegend() {
+    const el = $('proj-key'), pal = palette();
+    el.hidden = !S.colorBy;
+    if (!S.colorBy) return;
+    el.innerHTML = S.top.map((p, i) => `<span><i style="background:${pal.proj[i]}"></i>${p.title.replace(/[&<>]/g, '')}</span>`).join('')
+      + `<span><i style="background:${pal.projOther}"></i>其他專案</span>`;
+  }
+
+  // ?demo=debug：把內部狀態掛到 window 上，方便在 console 檢查
+  if (demo.has('debug')) window.__city = { S, weather, P, effects, fxKick, fxLoop, get raf() { return fxRaf; } };
+
   // 工人、吊鉤每 0.5 秒換一個姿勢。只在看得到天際線、大樓長完之後才重畫
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => { S.visible = e.isIntersecting; if (S.visible) fxKick(); }).observe(cv);
@@ -377,6 +467,8 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       const before = S.sum && S.today === today ? S.sum.total[today] || 0 : null;
       const prevH = S.lay?.towers.find((t) => t.d === today)?.h;
       Object.assign(S, { sum, today, data, active });
+      assignOwners();
+      drawLegend();
       setBanner();
       decorate();
       if (active) build(first);
@@ -390,7 +482,8 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       if (on) { build(animate); fxKick(); } else closeLens();
     },
     // 深淺色切換後重畫
-    refresh() { draw(); drawLens(); fxKick(); },
+    refresh() { draw(); drawLens(); drawLegend(); fxKick(); },
+    setColorBy(on) { S.colorBy = on; drawLegend(); draw(); },
     // 每分鐘：太陽月亮往前走一點、橫幅上的「幾分鐘前」更新
     minute() { setBanner(); if (S.active && !S.growing) draw(); },
   };

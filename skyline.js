@@ -35,6 +35,8 @@ export const PALETTES = {
     h: [null, '#c3d0e6', '#8ba3cf', '#4d6fb0', '#1e3d7e'], front: 0.14, side: 0.32,
     win: 'rgba(255,255,255,.62)', winPct: 62, glow: false, night: false,
     sun: '#f5b83d', ray: '#f0a72b', halo: 'rgba(245,184,61,.2)', cloud: '#dde6f1',
+    // 依專案上色用的六個顏色（順序固定；用 dataviz 的檢查腳本驗過色盲可辨識度）
+    proj: ['#3b6fb6', '#d9703a', '#2f9a7a', '#c2982a', '#b0508f', '#5a4fb8'], projOther: '#a7adb5', overcast: '#bcc3cc',
     dirt: '#dcc9a2', pants: '#2f3b52', road: 'rgba(28,26,23,.24)', dash: 'rgba(255,255,255,.75)',
     grass: ['#a9cf93', '#9bc486'], canopy: '#4e8d4b', canopyHi: '#7ab36c', trunk: '#7a5a3a', water: '#9cc9e8',
     ground: 'rgba(28,26,23,.11)', cell0: 'rgba(28,26,23,.08)', rule: 'rgba(28,26,23,.16)',
@@ -44,6 +46,7 @@ export const PALETTES = {
     h: [null, '#1f2d4d', '#2c447a', '#4166b3', '#6b93e6'], front: 0.2, side: 0.45,
     win: 'rgba(255,216,138,.92)', winPct: 46, glow: true, night: true,
     moon: '#f4e9c1', halo: 'rgba(244,233,193,.1)', star: '#ffffff',
+    proj: ['#4a7fd6', '#d9703a', '#22a085', '#a8842a', '#b85a99', '#6f63d6'], projOther: '#4a505a', overcast: '#3b4252',
     dirt: '#40382a', pants: '#a9b8d6', road: 'rgba(235,229,214,.11)', dash: 'rgba(235,229,214,.4)',
     grass: ['#22402a', '#1d3724'], canopy: '#3c7a45', canopyHi: '#5eaa63', trunk: '#5b4630', water: '#2b5a80',
     ground: 'rgba(235,229,214,.06)', cell0: 'rgba(235,229,214,.09)', rule: 'rgba(235,229,214,.17)',
@@ -136,11 +139,12 @@ export function roadPrims(lay, pal) {
 }
 
 // orb：太陽／月亮的位置（首頁會依台北時間移動；沒給就固定在右上角）。warm：0–1，晚霞的程度
-export function backdrop(lay, pal, { orb, warm = 0 } = {}) {
+// overcast：0–1，陰雨天的雲量（雲會蓋住太陽月亮，晚上看不到星星）
+export function backdrop(lay, pal, { orb, warm = 0, overcast = 0 } = {}) {
   const { x, y, r } = orb ?? lay.celestial, W = lay.g.W, out = [];
   const sun = warm > 0.35 ? { sun: '#f2803a', ray: '#e8642a', halo: 'rgba(242,128,58,.26)' } : pal;
   if (pal.night) {
-    for (let i = 0, n = Math.round(W / 16); i < n; i++) {
+    for (let i = 0, n = overcast ? 0 : Math.round(W / 16); i < n; i++) {
       const a = pick(977, i * 3), sx = 4 + (a % (W - 8)), sy = 4 + (pick(977, i * 3 + 1) % Math.max(20, lay.top - 30));
       if (Math.hypot(sx - x, sy - y) < r * 2.4) continue;
       const sr = 0.5 + (a % 9) / 10;
@@ -166,6 +170,15 @@ export function backdrop(lay, pal, { orb, warm = 0 } = {}) {
     }
     out.push({ k: 'ellipse', cx: x, cy: y, rx: r, ry: r, fill: sun.sun });
   }
+  if (overcast) {
+    const s = lay.celestial.r / 15, n = Math.round(4 + overcast * 4);
+    for (let i = 0; i < n; i++) {
+      const cx = W * ((i + 0.5) / n) + ((pick(311, i) % 30) - 15), cy = lay.celestial.y + ((pick(311, i + 9) % 16) - 4) * s, k = 1.2 + (pick(311, i + 20) % 6) / 10;
+      for (const [dx, dy2, rx, ry] of [[-13, 3, 12, 7], [0, -2, 15, 10], [14, 3, 12, 7]]) {
+        out.push({ k: 'ellipse', cx: cx + dx * s * k, cy: cy + dy2 * s * k, rx: rx * s * k, ry: ry * s * k, fill: pal.overcast });
+      }
+    }
+  }
   return out;
 }
 
@@ -179,7 +192,7 @@ export function prims(t, h, g, pal, flags = {}) {
       out.push({ k: 'poly', pts: [[bx, by - bh], [bx + w, by - bh], [bx + w, by], [bx, by]], fill: shade(color, pal.front) });
     }
     const roof = roofOf(bx, by - bh, w, dx, dy);
-    out.push({ k: 'poly', pts: roof, fill: isTop && flags.lit ? pal.seal : color, glow: isTop && pal.glow && t.l === 4 ? color : null });
+    out.push({ k: 'poly', pts: roof, fill: isTop && flags.lit ? pal.seal : color, glow: isTop && pal.glow && t.l === 4 && !flags.color ? color : null });
     return roof;
   };
   const windows = (bx, by, w, bh, salt) => {
@@ -197,7 +210,7 @@ export function prims(t, h, g, pal, flags = {}) {
   // 小工人：腳站在 (wx, wy)。手和工具有兩個姿勢（cls p0／p1）輪流出現，看起來就在動
   const ws = Math.max(0.95, Math.min(1.85, bw / 9));
   const worker = (wx, wy, tool) => {
-    if (flags.shift === 'off') return;   // 收工了
+    if (flags.shift === 'off' || flags.shift === 'storm') return;   // 收工了／颱風停工
     const s = ws, L = (pts, stroke, w, cls) => out.push({ k: 'line', pts, stroke, w: w * s, cls });
     L([[wx - 1.1 * s, wy], [wx - 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
     L([[wx + 1.1 * s, wy], [wx + 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
@@ -237,6 +250,14 @@ export function prims(t, h, g, pal, flags = {}) {
       L([sh, [wx + 2.3 * s, wy - 7 * s], [wx + 1 * s, wy - 7.7 * s]], CREW.skin, 1.1, 'p1');
       return;
     }
+    if (flags.shift === 'rain') {
+      // 下雨：撐傘監工
+      const hx = wx + 2.4 * s;
+      L([sh, [hx, wy - 8.4 * s]], CREW.skin, 1.1);
+      L([[hx, wy - 8.4 * s], [hx, wy - 13 * s]], CREW.steel, 0.8);
+      out.push({ k: 'path', d: `M${f(hx - 5 * s)} ${f(wy - 12.6 * s)}A${f(5 * s)} ${f(4.4 * s)} 0 0 1 ${f(hx + 5 * s)} ${f(wy - 12.6 * s)}Z`, fill: pal.seal });
+      return;
+    }
     if (flags.shift === 'overtime') out.push({ k: 'text', x: wx + s, y: wy - 12.2 * s, text: '加班中', size: 5.2 * s, fill: pal.seal });
     if (tool === 'hammer') {
       L([sh, [wx + 3.4 * s, wy - 8.8 * s]], CREW.skin, 1.1, 'p0');
@@ -270,6 +291,7 @@ export function prims(t, h, g, pal, flags = {}) {
       out.push({ k: 'line', pts: [[bx + bwid - 0.8, by], [bx + bwid - 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
       out.push({ k: 'rects', rects: [[bx, by, bwid, bh]], fill: CREW.cone });
       out.push({ k: 'rects', rects: [0.12, 0.42, 0.72].map((p) => [bx + bwid * p, by, bwid * 0.15, bh]), fill: CREW.white });
+      if (flags.shift === 'storm') out.push({ k: 'text', x: bx + bwid / 2, y: by - 3.5 * s, text: '颱風停工', size: 5.2 * ws, fill: pal.seal });
       // 收工後留一盞警示燈
       if (flags.shift === 'off') out.push({ k: 'ellipse', cx: bx + bwid / 2, cy: by - 1.8 * s, rx: 1.5 * s, ry: 1.5 * s, fill: CREW.hat, glow: CREW.hat });
     } else if (t.lot === 2) {
@@ -303,7 +325,7 @@ export function prims(t, h, g, pal, flags = {}) {
       tree(cx - bw * 0.2, cy + oy * 0.2, r);
     }
   } else {
-    const color = pal.h[t.l], k = h / t.h;
+    const color = flags.color ?? pal.h[t.l], k = h / t.h;
     if (t.h <= g.maxH * 0.55) {
       roof = box(x, y, bw, h, ox, oy, color, true);
       windows(x, y, bw, h, 1);
