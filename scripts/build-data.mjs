@@ -179,6 +179,8 @@ const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
     ...stats,
   };
   if (entry.icon) project.icon = entry.icon;
+  // 英文版的名稱與簡介（projects.json 的 title_en／summary_en）
+  if (entry.title_en || entry.summary_en) project.en = { title: entry.title_en, summary: entry.summary_en };
   if (repo.private) {
     if (entry.url) project.site = entry.url;
   } else {
@@ -216,7 +218,7 @@ const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, p
 // 生日（MM-DD，可不設）：當天首頁會飄氣球
 if (cfg.birthday) body.birthday = cfg.birthday;
 // ── 部署前的最後一關：私有專案不該帶的東西一樣都不能出現，有就直接失敗、不部署 ──
-const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'first', 'days', 'site', 'icon']);
+const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'first', 'days', 'site', 'icon', 'en']);
 const privateUrls = selected.filter(({ repo }) => repo.private).map(({ repo }) => repo.html_url);
 function assertNoLeak(text, where) {
   const hit = privateUrls.find((u) => text.includes(u));

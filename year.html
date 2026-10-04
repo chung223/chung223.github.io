@@ -64,6 +64,8 @@
   .names{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
   .names span{font:700 15px var(--kai); border:1px solid var(--rule); background:var(--card); border-radius:999px; padding:3px 13px}
   img.city{width:100%; margin-top:8px}
+  .lang{position:fixed; right:14px; top:12px; z-index:5; border:1.5px solid var(--ink); background:var(--card); color:var(--ink); font:500 12.5px var(--mono); padding:4px 12px; cursor:pointer; box-shadow:3px 3px 0 var(--ink)}
+  .lang:hover{color:var(--seal)}
   .home{font:700 18px var(--kai); border:1.5px solid var(--ink); padding:8px 20px; text-decoration:none; box-shadow:4px 4px 0 var(--ink); background:var(--card)}
   .home:hover{color:var(--seal)}
   /* 捲到才浮上來 */
@@ -80,19 +82,20 @@
 </style>
 </head>
 <body>
+<button class="lang" id="lang" type="button"></button>
 <main id="main"><section class="in"><p class="k">年度回顧</p><h2 id="loading">載入中…</h2></section></main>
 <noscript><p style="padding:40px 24px">這一頁需要 JavaScript 才能產生回顧。</p></noscript>
 
 <script type="module">
 import { addDays, wdOf, summarize } from './skyline.js';
+import { t, getLang, setLang, pTitle } from './i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const WD = '日一二三四五六';
 const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ymd = (d) => `${d.slice(0, 4)}/${+d.slice(5, 7)}/${+d.slice(8)}`;
 
-try {
-  const data = await (await fetch(`data.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' })).json();
+let data = null;
+function render() {
   const today = new Date(Date.now() + (data.utcOffsetMinutes ?? 480) * 60000).toISOString().slice(0, 10);
   const from = addDays(today, -364);
   const { total, year, activeDays, streak } = summarize(data, today);
@@ -115,71 +118,73 @@ try {
   const fresh = data.projects.filter((p) => p.first >= from).sort((a, b) => a.first.localeCompare(b.first));
   const hours = data.hours || [], wds = data.weekdays || [];
   const peakH = hours.indexOf(Math.max(...hours)), peakD = wds.indexOf(Math.max(...wds));
-  const part = peakH < 5 ? '凌晨' : peakH < 12 ? '早上' : peakH < 18 ? '下午' : '晚上';
   const langs = Object.entries(data.projects.reduce((m, p) => (p.lang ? { ...m, [p.lang]: (m[p.lang] || 0) + 1 } : m), {})).sort((a, b) => b[1] - a[1]);
   const num = (n) => `<span data-to="${n}">${calm ? n.toLocaleString() : 0}</span>`;
-  const seal = (p) => (p.private ? '<span class="seal">非公開</span>' : '');
+  const seal = (p) => (p.private ? `<span class="seal">${t('priv')}</span>` : '');
   const dark = document.documentElement.dataset.mode === 'dark';
 
+  document.title = t('yTitle');
+  $lang.textContent = t('langBtn');
+  $lang.setAttribute('aria-label', t('langAria'));
   document.getElementById('main').innerHTML = `
     <section>
       <p class="k">${ymd(from)} – ${ymd(today)}</p>
-      <h1>Chung 的<br>這一年</h1>
-      <p class="sub">過去 365 天的開發紀錄，從 commit 算出來的。往下捲。</p>
+      <h1>${t('yHero')}</h1>
+      <p class="sub">${t('yHeroSub')}</p>
     </section>
     <section>
-      <p class="k">總共</p>
-      <p class="big">${num(year)}<small>個 commit</small></p>
-      <p class="sub">分散在 <b>${data.projects.length + (data.other?.count || 0)} 個專案</b>裡，平均每個動工的日子 <b>${(year / Math.max(1, activeDays)).toFixed(1)} 個</b>。</p>
+      <p class="k">${t('yTotal')}</p>
+      <p class="big">${num(year)}<small>${t('yTotalUnit')}</small></p>
+      <p class="sub">${t('yTotalSub', data.projects.length + (data.other?.count || 0), (year / Math.max(1, activeDays)).toFixed(1))}</p>
     </section>
     <section>
-      <p class="k">有動工的日子</p>
-      <p class="big">${num(activeDays)}<small>天</small></p>
-      <p class="sub">一年裡有 <b>${Math.round((activeDays / 365) * 100)}%</b> 的日子在寫程式。最長連續 <b>${longest} 天</b>（到 ${ymd(longestEnd)} 為止）${streak ? `，目前連續 <b>${streak} 天</b>` : ''}。</p>
+      <p class="k">${t('yDays')}</p>
+      <p class="big">${num(activeDays)}<small>${t('yDaysUnit')}</small></p>
+      <p class="sub">${t('yDaysSub', Math.round((activeDays / 365) * 100), longest, ymd(longestEnd), streak)}</p>
     </section>
     <section>
-      <p class="k">最高的一棟</p>
-      <p class="big">${num(total[peakDay])}<small>個 commit</small></p>
-      <h2>${ymd(peakDay)} 星期${WD[wdOf(peakDay)]}</h2>
-      <p class="sub">那天主要在做 ${peakWho.map((p) => `<b>${esc(p.title)}</b>（${p.days[peakDay]}）`).join('、')}。</p>
+      <p class="k">${t('yPeak')}</p>
+      <p class="big">${num(total[peakDay])}<small>${t('yTotalUnit')}</small></p>
+      <h2>${t('yPeakDay', ymd(peakDay), wdOf(peakDay))}</h2>
+      <p class="sub">${t('yPeakSub', peakWho.map((p) => `<b>${esc(pTitle(p))}</b> (${p.days[peakDay]})`).join(t('yJoin')))}</p>
     </section>
     <section>
-      <p class="k">最常做的專案</p>
-      <h2>前五名</h2>
-      <ol class="rank">${top.map((p, i) => `<li><span class="n">${i + 1}</span><span class="t">${esc(p.title)}${seal(p)}</span><span class="c">${p.year.toLocaleString()}</span><i class="bar" style="--v:${(p.year / top[0].year).toFixed(3)}"></i></li>`).join('')}</ol>
+      <p class="k">${t('yTop')}</p>
+      <h2>${t('yTop5')}</h2>
+      <ol class="rank">${top.map((p, i) => `<li><span class="n">${i + 1}</span><span class="t">${esc(pTitle(p))}${seal(p)}</span><span class="c">${p.year.toLocaleString()}</span><i class="bar" style="--v:${(p.year / top[0].year).toFixed(3)}"></i></li>`).join('')}</ol>
     </section>
     <section>
-      <p class="k">一個月一個月看</p>
-      <h2>最忙的是 ${+monthKeys.find((m) => months[m] === monthMax).slice(5)} 月</h2>
-      <div class="bars" role="img" aria-label="每個月的 commit 數">${monthKeys.map((m) => `<i style="--v:${(months[m] / monthMax).toFixed(3)}" data-l="${+m.slice(5)}月"${months[m] === monthMax ? ' class="peak"' : ''} title="${m}：${months[m]} 個 commit"></i>`).join('')}</div>
+      <p class="k">${t('yMonths')}</p>
+      <h2>${t('yBusiest', +monthKeys.find((m) => months[m] === monthMax).slice(5))}</h2>
+      <div class="bars" role="img" aria-label="${t('yMonthsAria')}">${monthKeys.map((m) => `<i style="--v:${(months[m] / monthMax).toFixed(3)}" data-l="${t('month', +m.slice(5))}"${months[m] === monthMax ? ' class="peak"' : ''} title="${t('yMonthTip', m, months[m])}"></i>`).join('')}</div>
     </section>
     <section>
-      <p class="k">作息</p>
-      <h2>${part} ${peakH > 12 ? peakH - 12 : peakH} 點，星期${WD[peakD]}</h2>
-      <p class="sub">這是最常動工的時段和星期。</p>
+      <p class="k">${t('yRhythm')}</p>
+      <h2>${t('yRhythmHead', peakH, peakD)}</h2>
+      <p class="sub">${t('yRhythmSub')}</p>
       <dl class="trio">
-        <div><dt>最常動工的鐘頭</dt><dd>${peakH}:00</dd></div>
-        <div><dt>最忙的星期</dt><dd>星期${WD[peakD]}</dd></div>
-        <div><dt>最常用的語言</dt><dd>${langs.length ? esc(langs[0][0]) : '—'}</dd></div>
+        <div><dt>${t('yHour')}</dt><dd>${t('yHourVal', peakH)}</dd></div>
+        <div><dt>${t('yWeekday')}</dt><dd>${t('wdLong', peakD)}</dd></div>
+        <div><dt>${t('yLang')}</dt><dd>${langs.length ? esc(langs[0][0]) : '—'}</dd></div>
       </dl>
     </section>
     <section>
-      <p class="k">這一年新開的專案</p>
-      <p class="big">${num(fresh.length)}<small>個</small></p>
-      <div class="names">${fresh.map((p) => `<span>${esc(p.title)}</span>`).join('')}</div>
+      <p class="k">${t('yNew')}</p>
+      <p class="big">${num(fresh.length)}<small>${t('yNewUnit')}</small></p>
+      <div class="names">${fresh.map((p) => `<span>${esc(pTitle(p))}</span>`).join('')}</div>
     </section>
     <section>
-      <p class="k">蓋出來的城市</p>
-      <h2>每一棟樓是一天</h2>
-      <img class="city" src="skyline-${dark ? 'dark' : 'light'}.svg" alt="過去一年的 commit 天際線">
-      <p><a class="home" href="./">回到開發手帳 →</a></p>
+      <p class="k">${t('yCity')}</p>
+      <h2>${t('yCityHead')}</h2>
+      <img class="city" src="skyline-${dark ? 'dark' : 'light'}.svg" alt="${t('yCityAlt')}">
+      <p><a class="home" href="./">${t('yBack')}</a></p>
     </section>`;
 
   // 捲到才浮上來，數字跟著跳
   const countUp = (el) => {
     const to = +el.dataset.to, t0 = performance.now();
-    const step = (t) => {
-      const p = Math.min(1, (t - t0) / 1300);
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / 1300);
       el.textContent = Math.round(to * (1 - (1 - p) ** 4)).toLocaleString();
       if (p < 1) requestAnimationFrame(step);
     };
@@ -199,8 +204,16 @@ try {
     }, { threshold: 0.35 });
     sections.forEach((s) => io.observe(s));
   }
+}
+
+const $lang = document.getElementById('lang');
+$lang.addEventListener('click', () => { setLang(getLang() === 'zh' ? 'en' : 'zh'); if (data) render(); });
+document.getElementById('loading').textContent = t('yLoading');
+try {
+  data = await (await fetch(`data.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' })).json();
+  render();
 } catch (err) {
-  document.getElementById('loading').textContent = '資料載入失敗';
+  document.getElementById('loading').textContent = t('yFail');
   console.error(err);
 }
 </script>

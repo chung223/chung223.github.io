@@ -10,25 +10,10 @@ const LUNAR_NEW_YEAR = { 2027: '02-06', 2028: '01-26', 2029: '02-13', 2030: '02-
 const CAR_COLORS = ['#e4573d', '#f2b632', '#3f7fd1', '#4fa36b', '#8e6fd0', '#e8e2d4', '#30343c'];
 const SPARK_COLORS = ['#ffd166', '#ff6b6b', '#6bd6ff', '#b388ff', '#7bed9f', '#ff9f43'];
 
-// 點工人時說的話，每點一次換一句
-const LINES = {
-  hammer: (n) => [
-    n ? `嗨！今天已經動工 ${n} 次了 👋` : '嗨！今天還沒開工喔 👋',
-    '需求又改了…再敲一次 🔨',
-    '安全帽戴好，commit 寫好 ⛑️',
-    '這棟蓋完，明天還有一棟',
-    '老闆說今天不加班（才怪）',
-  ],
-  shovel: () => ['嗨！明天的地基我先挖 👋', '這塊地明天要蓋多高？', '等等，好像挖到 bug 了 🐛', '地基打穩，重構才不會垮'],
-  lunch: () => ['午休中，便當真香 🍱', '吃飽再 commit'],
-  overtime: () => ['加班中…先別吵 🌙', '這個 bug 修完就下班'],
-  rain: () => ['下雨天，撐傘監工 ☔', '雨這麼大，水泥不會乾'],
-};
-
 // 台北的即時天氣（Open-Meteo，免金鑰）
 const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=25.04&longitude=121.53&current=weather_code,wind_speed_10m,cloud_cover';
 
-export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay, rel, onWeather }) {
+export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay, rel, onWeather, t, pTitle }) {
   const root = document.documentElement;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cv = $('sky'), fx = $('fx');
@@ -39,7 +24,8 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     colorBy: false, owner: {}, top: [],
   };
   // rain：0 沒雨、1 下雨、2 大雨；cloud：0–1 雲量
-  const weather = { rain: 0, thunder: false, typhoon: false, cloud: 0 };
+  const weather = { rain: 0, thunder: false, typhoon: false, cloud: 0, label: '' };
+  const tr = t;   // 這個檔案裡 t 常被拿來當「一棟樓」的變數名，翻譯函式另外取名
   const palette = () => PALETTES[root.dataset.mode === 'dark' ? 'dark' : 'light'];
   const isNightHour = (h) => h < 5.5 || h >= 18.5;
 
@@ -144,7 +130,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     for (const p of backdrop(lay, pal, { orb: sc.orb, warm: sc.dusk, overcast: sc.overcast })) paint(ctx, p);
     paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
     for (const p of roadPrims(lay, pal)) paint(ctx, p);
-    const crew = [], cheer = now < S.cheerUntil;
+    const crew = [], cheer = now < S.cheerUntil, txt = { ot: tr('ot'), storm: tr('typhoonSign') };
     for (const t of lay.towers) {
       const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
       let h = t.h * (1 - (1 - p) ** 3);
@@ -155,14 +141,14 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       }
       const who = S.colorBy && t.n ? S.owner[t.d] : undefined;
       const color = who === undefined ? undefined : who >= 0 ? pal.proj[who] : pal.projOther;
-      for (const shape of prims(t, h, lay.g, pal, { today: isToday, lit: S.hover === t, crew, shift: sc.shift, cheer, color })) {
+      for (const shape of prims(t, h, lay.g, pal, { today: isToday, lit: S.hover === t, crew, shift: sc.shift, cheer, color, txt })) {
         if (!shape.cls || shape.cls === pose) paint(ctx, shape);
       }
     }
     S.crew = crew;
     ctx.fillStyle = pal.muted;
     ctx.font = '11px "DM Mono", monospace';
-    for (const l of lay.labels) ctx.fillText(l.text, l.x, lay.g.labelY);
+    for (const l of lay.labels) ctx.fillText(tr('month', l.m), l.x, lay.g.labelY);
   }
 
   // ── 滑鼠：hover 看當天、點大樓看 commit、點工人打招呼、點太陽月亮切換 ──
@@ -176,7 +162,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       if (!t.lot && px >= t.x && px <= t.x + bw + ox && py >= top - oy && py <= t.y) found = t;
     }
     if (found !== S.hover) { S.hover = found; draw(); }
-    if (found) showTip(found.d, found.n, true, e.clientX, r.top + found.y - found.h - oy, found.peak ? '🏆 這一年最高的一棟' : '');
+    if (found) showTip(found.d, found.n, true, e.clientX, r.top + found.y - found.h - oy, found.peak ? tr('peak') : '');
     else hideTip();
     const c = S.orb || S.lay.celestial;
     S.onOrb = !found && Math.hypot(px - c.x, py - c.y) < c.r * 1.7;
@@ -204,7 +190,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     lens.style.left = Math.max(0, Math.min(W - D, w.x - D - 14)) + 'px';
     lens.style.top = Math.min(S.lay.g.H - D, w.y - 6 * w.s - D * 0.6) + 'px';
     const kind = ['lunch', 'overtime', 'rain'].includes(S.shift) ? S.shift : w.tool;
-    const lines = LINES[kind](S.sum.total[S.today] || 0), i = S.said[kind] || 0;
+    const lines = tr('lines')[kind](S.sum.total[S.today] || 0), i = S.said[kind] || 0;
     S.said[kind] = i + 1;
     $('bubble').textContent = lines[i % lines.length];
     hideTip();
@@ -265,7 +251,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
   // ── 飛機拉的橫幅 ──
   function setBanner() {
     const p = S.data?.projects[0];
-    $('banner').textContent = p ? `最後動工 ${rel(p.last)} · ${p.title}` : '';
+    $('banner').textContent = p ? tr('banner', rel(p.last), pTitle(p)) : '';
   }
 
   // ── 季節彩蛋：春節掛燈籠、生日飄氣球 ──
@@ -394,7 +380,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     const cx = t.x + S.lay.g.bw / 2, cy = t.y - t.h - 12;
     confetti(cx, cy);
     const plus = $('plus');
-    plus.textContent = `+${delta} commit`;
+    plus.textContent = tr('plus', delta);
     Object.assign(plus.style, { left: Math.min(S.lay.g.W - 90, cx - 30) + 'px', top: cy - 26 + 'px' });
     plus.hidden = true; void plus.offsetWidth; plus.hidden = false;
     fxKick();
@@ -418,7 +404,9 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
         typhoon: wet && wind >= 62,   // 八級風以上又下雨
         cloud,
       });
-      onWeather?.(weather.typhoon ? '颱風天 🌀' : weather.thunder ? '雷雨 ⛈️' : weather.rain === 2 ? '大雨 🌧️' : weather.rain ? '下雨 ☔' : cloud > 0.8 ? '陰天 ☁️' : '');
+      // 傳字典的 key，由首頁依目前語言顯示
+      weather.label = weather.typhoon ? 'wTyphoon' : weather.thunder ? 'wThunder' : weather.rain === 2 ? 'wHeavy' : weather.rain ? 'wRain' : cloud > 0.8 ? 'wCloudy' : '';
+      onWeather?.(weather.label);
       draw();
       fxKick();
     } catch {
@@ -442,8 +430,8 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     const el = $('proj-key'), pal = palette();
     el.hidden = !S.colorBy;
     if (!S.colorBy) return;
-    el.innerHTML = S.top.map((p, i) => `<span><i style="background:${pal.proj[i]}"></i>${p.title.replace(/[&<>]/g, '')}</span>`).join('')
-      + `<span><i style="background:${pal.projOther}"></i>其他專案</span>`;
+    el.innerHTML = S.top.map((p, i) => `<span><i style="background:${pal.proj[i]}"></i>${pTitle(p).replace(/[&<>]/g, '')}</span>`).join('')
+      + `<span><i style="background:${pal.projOther}"></i>${tr('otherProjects')}</span>`;
   }
 
   // ?demo=debug：把內部狀態掛到 window 上，方便在 console 檢查
@@ -484,6 +472,8 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
     // 深淺色切換後重畫
     refresh() { draw(); drawLens(); drawLegend(); fxKick(); },
     setColorBy(on) { S.colorBy = on; drawLegend(); draw(); },
+    // 語言切換後，把城市裡的文字換掉
+    relabel() { setBanner(); drawLegend(); draw(); },
     // 每分鐘：太陽月亮往前走一點、橫幅上的「幾分鐘前」更新
     minute() { setBanner(); if (S.active && !S.growing) draw(); },
   };

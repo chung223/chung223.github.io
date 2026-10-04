@@ -85,7 +85,7 @@ export function layout({ total, level, today, W, weeks }) {
   let prev = '';
   for (let c = 0; c < weeks; c++) {
     const m = addDays(start, c * 7).slice(0, 7);
-    if (m !== prev && c < weeks - 1) labels.push({ x: pad + c * pitch, text: `${+m.slice(5)}月` });
+    if (m !== prev && c < weeks - 1) labels.push({ x: pad + c * pitch, m: +m.slice(5), text: `${+m.slice(5)}月` });
     prev = m;
   }
   // 連續沒動工到第幾天（越久綠地越茂密）
@@ -258,7 +258,7 @@ export function prims(t, h, g, pal, flags = {}) {
       out.push({ k: 'path', d: `M${f(hx - 5 * s)} ${f(wy - 12.6 * s)}A${f(5 * s)} ${f(4.4 * s)} 0 0 1 ${f(hx + 5 * s)} ${f(wy - 12.6 * s)}Z`, fill: pal.seal });
       return;
     }
-    if (flags.shift === 'overtime') out.push({ k: 'text', x: wx + s, y: wy - 12.2 * s, text: '加班中', size: 5.2 * s, fill: pal.seal });
+    if (flags.shift === 'overtime') out.push({ k: 'text', x: wx + s, y: wy - 12.2 * s, text: flags.txt?.ot ?? '加班中', size: 5.2 * s, fill: pal.seal });
     if (tool === 'hammer') {
       L([sh, [wx + 3.4 * s, wy - 8.8 * s]], CREW.skin, 1.1, 'p0');
       L([[wx + 3.4 * s, wy - 8.8 * s], [wx + 4.6 * s, wy - 10.6 * s]], CREW.wood, 0.9, 'p0');
@@ -291,7 +291,7 @@ export function prims(t, h, g, pal, flags = {}) {
       out.push({ k: 'line', pts: [[bx + bwid - 0.8, by], [bx + bwid - 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
       out.push({ k: 'rects', rects: [[bx, by, bwid, bh]], fill: CREW.cone });
       out.push({ k: 'rects', rects: [0.12, 0.42, 0.72].map((p) => [bx + bwid * p, by, bwid * 0.15, bh]), fill: CREW.white });
-      if (flags.shift === 'storm') out.push({ k: 'text', x: bx + bwid / 2, y: by - 3.5 * s, text: '颱風停工', size: 5.2 * ws, fill: pal.seal });
+      if (flags.shift === 'storm') out.push({ k: 'text', x: bx + bwid / 2, y: by - 3.5 * s, text: flags.txt?.storm ?? '颱風停工', size: 5.2 * ws, fill: pal.seal });
       // 收工後留一盞警示燈
       if (flags.shift === 'off') out.push({ k: 'ellipse', cx: bx + bwid / 2, cy: by - 1.8 * s, rx: 1.5 * s, ry: 1.5 * s, fill: CREW.hat, glow: CREW.hat });
     } else if (t.lot === 2) {

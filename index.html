@@ -85,6 +85,10 @@
   .ticker .rail span::after{content:"✦"; margin-left:26px; opacity:.4}
   /* 右上角的太陽／月亮：顯示現在的模式，點一下切換 */
   .mode{position:absolute; right:0; top:0; bottom:0; width:46px; border:0; cursor:pointer; display:grid; place-items:center; background:var(--ink); color:#f5b83d; box-shadow:-14px 0 14px var(--ink)}
+  .lang{position:absolute; right:46px; top:0; bottom:0; width:40px; border:0; cursor:pointer; background:var(--ink); color:var(--paper); font:500 12.5px var(--mono); box-shadow:-14px 0 14px var(--ink); z-index:1}
+  .lang:hover{color:#f5b83d}
+  [data-mode="dark"] .lang{background:var(--card); color:var(--ink); box-shadow:-14px 0 14px var(--card)}
+  .mode{box-shadow:none !important; z-index:1}
   .mode svg{width:19px; height:19px; transition:transform .5s cubic-bezier(.2,1.5,.4,1)}
   .mode:hover svg{transform:rotate(40deg) scale(1.15)}
   .mode .moon, [data-mode="dark"] .mode .sun{display:none}
@@ -391,7 +395,8 @@
 </style>
 </head>
 <body>
-<div class="ticker" aria-label="最近的開發動態"><span class="live">LIVE</span><div class="rail" id="rail"></div>
+<div class="ticker" data-i18n-aria="ticker" aria-label="最近的開發動態"><span class="live">LIVE</span><div class="rail" id="rail"></div>
+  <button class="lang" id="lang" type="button"></button>
   <button class="mode" id="theme" type="button">
     <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><path d="M12 2.2v3M12 18.8v3M2.2 12h3M18.8 12h3M5.1 5.1l2.1 2.1M16.8 16.8l2.1 2.1M5.1 18.9l2.1-2.1M16.8 7.2l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z" fill="currentColor"/><circle cx="17.6" cy="5.2" r="1" fill="currentColor"/><circle cx="20.6" cy="9" r=".7" fill="currentColor"/></svg>
@@ -399,20 +404,20 @@
 </div>
 <div class="wrap">
   <section class="mast">
-    <p class="kicker" id="status">Build log · 同步中</p>
-    <h1>Chung 的<span class="hl">開發手帳</span><span class="stamp" aria-hidden="true"><span>持</span><span>續</span><span>施</span><span>工</span></span></h1>
-    <p class="lede">做 iOS／macOS 原生 App、PWA，還有各種解決自己麻煩的小工具。這一頁是<b>自動更新的開發紀錄</b>：每個專案的 commit 熱力圖、最後更新時間，以及最近改了什麼。</p>
+    <p class="kicker" id="status" data-i18n="syncing">Build log · 同步中</p>
+    <h1><span data-i18n-html="h1">Chung 的<span class="hl">開發手帳</span></span><span class="stamp" aria-hidden="true"><span>持</span><span>續</span><span>施</span><span>工</span></span></h1>
+    <p class="lede" data-i18n-html="lede">做 iOS／macOS 原生 App、PWA，還有各種解決自己麻煩的小工具。這一頁是<b>自動更新的開發紀錄</b>：每個專案的 commit 熱力圖、最後更新時間，以及最近改了什麼。</p>
     <dl class="ledger" id="ledger"></dl>
   </section>
 
   <section class="sec">
     <div class="sec-h">
-      <h2>一年的痕跡</h2><span class="note" id="hm-note"></span>
+      <h2 data-i18n="secYear">一年的痕跡</h2><span class="note" id="hm-note"></span>
       <span class="right">
-        <span id="park-key" class="park"><i></i>綠地＝沒動工</span>
-        <button type="button" class="chip" id="by-proj" aria-pressed="false">依專案上色</button>
-        <span id="heat-key">少 <span class="legend"><i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span> 多</span>
-        <span class="seg" role="group" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true">立體</button><button type="button" id="v2d" aria-pressed="false">平面</button></span>
+        <span id="park-key" class="park"><i></i><span data-i18n="park">綠地＝沒動工</span></span>
+        <button type="button" class="chip" id="by-proj" aria-pressed="false" data-i18n="byProj">依專案上色</button>
+        <span id="heat-key"><span data-i18n="less">少</span> <span class="legend"><i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span> <span data-i18n="more">多</span></span>
+        <span class="seg" role="group" data-i18n-aria="viewGroup" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true" data-i18n="v3d">立體</button><button type="button" id="v2d" aria-pressed="false" data-i18n="v2d">平面</button></span>
       </span>
     </div>
     <div class="proj-key" id="proj-key" hidden></div>
@@ -433,48 +438,49 @@
   </section>
 
   <section class="sec">
-    <div class="sec-h"><h2>都幾點動工</h2><span class="note" id="rhythm-note"></span></div>
+    <div class="sec-h"><h2 data-i18n="secRhythm">都幾點動工</h2><span class="note" id="rhythm-note"></span></div>
     <div class="rhythm">
-      <figure><div class="bars" id="hours" role="img"></div><figcaption><span>0 點</span><span>6</span><span>12</span><span>18</span><span>23</span></figcaption></figure>
-      <figure><div class="bars" id="weekdays" role="img"></div><figcaption><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></figcaption></figure>
+      <figure><div class="bars" id="hours" role="img"></div><figcaption id="hour-axis"></figcaption></figure>
+      <figure><div class="bars" id="weekdays" role="img"></div><figcaption id="wd-axis"></figcaption></figure>
     </div>
   </section>
 
   <div class="cols">
     <section class="sec">
-      <div class="sec-h"><h2>最近動態</h2></div>
+      <div class="sec-h"><h2 data-i18n="secFeed">最近動態</h2></div>
       <ol class="feed" id="feed"></ol>
     </section>
     <section class="sec">
-      <div class="sec-h"><h2>進行中的專案</h2><span class="note">30 天內有更新</span><span class="right chips" id="filters" role="group" aria-label="篩選專案"></span></div>
+      <div class="sec-h"><h2 data-i18n="secActive">進行中的專案</h2><span class="note" data-i18n="noteActive">30 天內有更新</span><span class="right chips" id="filters" role="group" data-i18n-aria="fGroup" aria-label="篩選專案"></span></div>
       <div class="grid" id="active"></div>
     </section>
   </div>
 
   <section class="sec" id="old-sec" hidden>
-    <div class="sec-h"><h2>較早的專案</h2><span class="note">每一格是一週</span></div>
+    <div class="sec-h"><h2 data-i18n="secOld">較早的專案</h2><span class="note" data-i18n="noteOld">每一格是一週</span></div>
     <ul class="old" id="old"></ul>
   </section>
 
   <footer>
     <span id="foot-sync"></span>
-    <a href="year.html">年度回顧</a>
-    <a href="feed.xml">週報 RSS</a>
+    <a href="year.html" data-i18n="yearLink">年度回顧</a>
+    <a href="feed.xml" data-i18n="feedLink">週報 RSS</a>
     <a href="https://github.com/chung223">GitHub @chung223</a>
   </footer>
 </div>
 <div class="tip" id="tip" role="status"></div>
-<div class="day" id="day" role="dialog" aria-label="這一天的 commit" hidden></div>
+<div class="day" id="day" role="dialog" data-i18n-aria="dayAria" aria-label="這一天的 commit" hidden></div>
 <noscript><p class="empty">這一頁需要 JavaScript 才能載入開發紀錄。</p></noscript>
 
 <script type="module">
 import { addDays, dayMs, wdOf, fixedLevel, summarize } from './skyline.js';
 import { createCity } from './city.js';
+import { t, getLang, setLang, applyStatic, pTitle, pSummary, tag } from './i18n.js';
 
 (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const DAY = 86400000, WD = '日一二三四五六';
+  const DAY = 86400000;
   const ACTIVE_DAYS = 30, MINI_WEEKS = 26, WEEKS = 53;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let data = null, offset = 480, view = null;
@@ -486,13 +492,13 @@ import { createCity } from './city.js';
 
   function rel(iso) {
     const diff = Date.now() - Date.parse(iso), m = Math.floor(diff / 60000);
-    if (m < 1) return '剛剛';
-    if (m < 60) return `${m} 分鐘前`;
-    if (m < 60 * 24) return `${Math.floor(m / 60)} 小時前`;
+    if (m < 1) return t('relNow');
+    if (m < 60) return t('relMin', m);
+    if (m < 60 * 24) return t('relHour', Math.floor(m / 60));
     const days = Math.round((dayMs(dayOf(Date.now())) - dayMs(dayOf(Date.parse(iso)))) / DAY);
-    if (days <= 1) return '昨天';
-    if (days < 30) return `${days} 天前`;
-    if (days < 365) return `${Math.floor(days / 30)} 個月前`;
+    if (days <= 1) return t('yesterday').toLowerCase();
+    if (days < 30) return t('relDays', days);
+    if (days < 365) return t('relMonths', Math.floor(days / 30));
     return dayOf(Date.parse(iso)).replaceAll('-', '/');
   }
   const exact = (iso) => new Date(Date.parse(iso) + offset * 60000).toISOString().slice(0, 16).replace('T', ' ');
@@ -537,9 +543,9 @@ import { createCity } from './city.js';
   if (['night', 'overtime', 'off', 'fireworks'].some((k) => demo.has(k))) root.dataset.theme = 'dark';
   if (['day', 'lunch', 'dusk'].some((k) => demo.has(k))) root.dataset.theme = 'light';
   let sky = '', note = '';
-  const setNote = () => { $('hm-note').textContent = note + (sky ? ` · 台北現在${sky}` : ''); };
+  const setNote = () => { $('hm-note').textContent = note + (sky ? t('taipeiNow', t(sky)) : ''); };
   const city = createCity({
-    demo, hour: taipeiHour, showTip, hideTip: () => tip.classList.remove('on'), toggleTheme, pickDay: openDay, rel,
+    demo, hour: taipeiHour, showTip, hideTip: () => tip.classList.remove('on'), toggleTheme, pickDay: openDay, rel, t, pTitle,
     onWeather: (label) => { sky = label; setNote(); },
   });
   $('by-proj').addEventListener('click', () => {
@@ -554,7 +560,7 @@ import { createCity } from './city.js';
     const t = `${(p.tags || []).join(' ')} ${p.lang || ''}`;
     return /iOS|iPadOS|macOS|Swift/.test(t) ? 'app' : /PWA|Web|LINE|遊戲|HTML|JavaScript|TypeScript|PHP|Vue/.test(t) ? 'web' : 'other';
   };
-  const FILTERS = [['all', '全部'], ['app', 'App'], ['web', 'Web'], ['other', '其他'], ['public', '公開'], ['private', '非公開']];
+  const FILTERS = [['all', 'fAll'], ['app', 'fApp'], ['web', 'fWeb'], ['other', 'fOther'], ['public', 'fPublic'], ['private', 'fPrivate']];
   const passes = (el, f) => f === 'all' || el.dataset.kind === f || el.dataset.vis === f;
   let filter = 'all';
   function applyFilter() {
@@ -562,7 +568,7 @@ import { createCity } from './city.js';
     for (const el of els) el.hidden = !passes(el, filter);
     $('filters').innerHTML = FILTERS.map(([k, label]) => [k, label, els.filter((el) => passes(el, k)).length])
       .filter(([k, , n]) => n || k === filter)
-      .map(([k, label, n]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${k === filter}">${label}<small>${n}</small></button>`).join('');
+      .map(([k, label, n]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${k === filter}">${t(label)}<small>${n}</small></button>`).join('');
     $('old-sec').hidden = !els.some((el) => el.closest('#old') && !el.hidden);
     $('none').hidden = els.some((el) => el.closest('#active') && !el.hidden);
   }
@@ -573,7 +579,7 @@ import { createCity } from './city.js';
   function setMode() {
     const h = taipeiHour();
     root.dataset.mode = root.dataset.theme || (h < 5.5 || h >= 18.5 ? 'dark' : 'light');
-    $('theme').setAttribute('aria-label', root.dataset.mode === 'dark' ? '現在是夜景，切換成白天' : '現在是白天，切換成夜景');
+    $('theme').setAttribute('aria-label', t(root.dataset.mode === 'dark' ? 'toDay' : 'toNight'));
     city.refresh();
   }
   function toggleTheme() {
@@ -582,20 +588,30 @@ import { createCity } from './city.js';
     setMode();
   }
   $('theme').addEventListener('click', toggleTheme);
-  setMode();
+  function setLanguage(next) {
+    if (next) setLang(next);
+    applyStatic();
+    document.title = t('title');
+    $('lang').textContent = t('langBtn');
+    $('lang').setAttribute('aria-label', t('langAria'));
+    if (data) render(false);
+    setMode();
+    city.relabel();
+  }
+  $('lang').addEventListener('click', () => setLanguage(getLang() === 'zh' ? 'en' : 'zh'));
+  setLanguage();
 
   // 點大樓：列出那天各專案的 commit（公開的顯示訊息，私有的照舊塗黑）
-  function openDay(t, x, y) {
-    const d = t.d, day = $('day');
+  function openDay(tw, x, y) {
+    const d = tw.d, day = $('day');
     const rows = data.projects.filter((p) => p.days[d]).sort((a, b) => b.days[d] - a.days[d]).map((p) => {
       const body = p.private ? redact(p.title + d, 1) : (p.log?.[d] || []).map((m) => `<p class="m">${esc(m)}</p>`).join('');
-      return `<li><div class="p"><span>${esc(p.title)}</span>${p.private ? '<span class="seal">非公開</span>' : ''}<span class="n">×${p.days[d]}</span></div>${body}</li>`;
+      return `<li><div class="p"><span>${esc(pTitle(p))}</span>${p.private ? `<span class="seal">${t('priv')}</span>` : ''}<span class="n">×${p.days[d]}</span></div>${body}</li>`;
     });
     const hidden = data.other?.days?.[d];
-    if (hidden) rows.push(`<li><div class="p"><span>其他非公開專案</span><span class="n">×${hidden}</span></div></li>`);
-    const sub = t.n ? `${t.n} 個 commit${t.peak ? ' · 🏆 這一年最高的一棟' : ''}`
-      : `沒有動工，這裡是綠地 🌳${t.idle > 1 ? ` · 連續休息第 ${t.idle} 天` : ''}`;
-    day.innerHTML = `<button type="button" class="x" aria-label="關閉">×</button><h3>${d.replaceAll('-', '/')} 週${WD[wdOf(d)]}</h3><p class="t">${sub}</p>${rows.length ? `<ul>${rows.join('')}</ul>` : ''}`;
+    if (hidden) rows.push(`<li><div class="p"><span>${t('otherPrivate')}</span><span class="n">×${hidden}</span></div></li>`);
+    const sub = tw.n ? `${t('commits', tw.n)}${tw.peak ? ` · ${t('peak')}` : ''}` : t('dayPark', tw.idle);
+    day.innerHTML = `<button type="button" class="x" aria-label="${t('close')}">×</button><h3>${d.replaceAll('-', '/')} ${t('wd', wdOf(d))}</h3><p class="t">${sub}</p>${rows.length ? `<ul>${rows.join('')}</ul>` : ''}`;
     day.hidden = true; void day.offsetWidth; day.hidden = false;
     // 用 offsetWidth／Height：彈出動畫正在縮放，getBoundingClientRect 量到的會是縮小後的尺寸
     const w = day.offsetWidth, h = day.offsetHeight;
@@ -648,23 +664,23 @@ import { createCity } from './city.js';
     const active = projects.filter((p) => dayOf(Date.parse(p.last)) >= cutoff);
     const older = projects.filter((p) => !active.includes(p));
     $('ledger').innerHTML = [
-      ['近一年 commits', year],
-      ['有動工的日子', activeDays, '天'],
-      ['目前連續', streak, '天'],
-      ['進行中專案', active.length, '個'],
+      [t('statYear'), year],
+      [t('statDays'), activeDays, t('uDay')],
+      [t('statStreak'), streak, t('uDay')],
+      [t('statActive'), active.length, t('uItem')],
     ].map(([k, v, u]) => `<div><dt>${k}</dt><dd><span data-to="${v}">${first && !calm ? 0 : v.toLocaleString()}</span>${u ? `<small>${u}</small>` : ''}</dd></div>`).join('');
     if (first && !calm) $('ledger').querySelectorAll('[data-to]').forEach((el) => countUp(el, +el.dataset.to));
 
     const latest = projects[0];
-    $('status').textContent = latest ? `Build log · 最後動工 ${rel(latest.last)}` : 'Build log';
+    $('status').textContent = latest ? t('lastBuilt', rel(latest.last)) : 'Build log';
     // 排程至少每 6 小時會重新部署一次；超過 14 小時沒動靜，多半是 token 過期或排程被停用
     const staleHours = Math.floor((Date.now() - Date.parse(data.generatedAt)) / 3600000);
     $('foot-sync').textContent = staleHours >= 14
-      ? `⚠ 資料已經 ${staleHours} 小時沒有同步，可能中斷了 · 上次更新 ${exact(data.generatedAt)}`
-      : `資料每 15 分鐘自動同步 · 上次更新 ${exact(data.generatedAt)}`;
+      ? t('stale', staleHours, exact(data.generatedAt))
+      : t('synced', exact(data.generatedAt));
     $('foot-sync').classList.toggle('stale', staleHours >= 14);
     const privCount = projects.filter((p) => p.private).length + (data.other?.count || 0);
-    note = `所有專案加總${privCount ? ` · 含 ${privCount} 個非公開專案` : ''}`;
+    note = t('allProjects', privCount);
     setNote();
 
     // ── 平面熱力圖 ──
@@ -672,17 +688,17 @@ import { createCity } from './city.js';
     let months = '', prev = '';
     for (let w = 0; w < WEEKS; w++) {
       const m = addDays(start, w * 7).slice(0, 7);
-      if (m !== prev && w < WEEKS - 2) months += `<span style="grid-column:${w + 1}">${+m.slice(5)}月</span>`;
+      if (m !== prev && w < WEEKS - 2) months += `<span style="grid-column:${w + 1}">${t('month', +m.slice(5))}</span>`;
       prev = m;
     }
-    const label = `過去一年的 commit 熱力圖：共 ${year} 個 commit，${activeDays} 天有動工`;
+    const label = t('heatAria', year, activeDays);
     const hm = $('hm');
     hm.style.setProperty('--cols', WEEKS);
     hm.setAttribute('aria-label', label);
     $('sky').setAttribute('aria-label', label);
     hm.innerHTML =
       `<div class="hm-months">${months}</div>` +
-      `<div class="hm-wd"><span></span><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span></div>` +
+      `<div class="hm-wd"><span></span><span>${t('wdAxis')[1]}</span><span></span><span>${t('wdAxis')[3]}</span><span></span><span>${t('wdAxis')[5]}</span><span></span></div>` +
       `<div class="cells" data-scope="all">${cells(total, WEEKS, level, today)}</div>`;
 
     // ── 最近動態 + 跑馬燈 ──
@@ -696,15 +712,15 @@ import { createCity } from './city.js';
         const msgs = (p.recent || []).filter((c) => dayOf(Date.parse(c.t)) === d);
         const body = p.private ? redact(p.title + d, 1)
           : msgs.length ? `<p class="m">${esc(msgs[0].m)}</p>` : '';
-        rail.push(`<span><b>${md(d)}</b>${esc(p.title)}<em>×${p.days[d]}</em>${!p.private && msgs.length ? `<u>${esc(msgs[0].m.slice(0, 48))}</u>` : ''}</span>`);
-        return `<li><div class="p"><span>${esc(p.title)}</span>${p.private ? '<span class="seal">非公開</span>' : ''}<span class="n">×${p.days[d]}</span></div>${body}</li>`;
+        rail.push(`<span><b>${md(d)}</b>${esc(pTitle(p))}<em>×${p.days[d]}</em>${!p.private && msgs.length ? `<u>${esc(msgs[0].m.slice(0, 48))}</u>` : ''}</span>`);
+        return `<li><div class="p"><span>${esc(pTitle(p))}</span>${p.private ? `<span class="seal">${t('priv')}</span>` : ''}<span class="n">×${p.days[d]}</span></div>${body}</li>`;
       });
       const hidden = data.other?.days?.[d];
-      if (hidden) rows.push(`<li><div class="p"><span>其他非公開專案</span><span class="n">×${hidden}</span></div></li>`);
-      const name = i === 0 ? '今天' : i === 1 ? '昨天' : `週${WD[wdOf(d)]}`;
-      feed += `<li class="rv"><div class="d">${md(d)}<span>${name} · ${total[d]} 個 commit</span></div><ul>${rows.join('')}</ul></li>`;
+      if (hidden) rows.push(`<li><div class="p"><span>${t('otherPrivate')}</span><span class="n">×${hidden}</span></div></li>`);
+      const name = i === 0 ? t('today') : i === 1 ? t('yesterday') : t('wd', wdOf(d));
+      feed += `<li class="rv"><div class="d">${md(d)}<span>${name} · ${t('commits', total[d])}</span></div><ul>${rows.join('')}</ul></li>`;
     }
-    $('feed').innerHTML = feed || '<li class="empty">最近沒有動靜</li>';
+    $('feed').innerHTML = feed || `<li class="empty">${t('quiet')}</li>`;
     // 內容放兩份、位移一半，接起來才沒有縫；項目太少時多補幾輪把寬度撐滿
     const loops = rail.length ? Math.max(1, Math.ceil(12 / rail.length)) : 0;
     $('rail').innerHTML = rail.join('').repeat(loops * 2);
@@ -714,25 +730,26 @@ import { createCity } from './city.js';
     const weekAgo = addDays(today, -6);
     $('active').innerHTML = active.map((p) => {
       const week = Object.entries(p.days).reduce((s, [d, n]) => s + (d >= weekAgo ? n : 0), 0);
-      const links = p.private ? '<span class="seal" title="私有專案：只公開簡介與 commit 數量">非公開</span>'
-        : `<span class="links">${p.site ? `<a href="${esc(p.site)}">網站 ↗</a>` : ''}<a href="${esc(p.repo)}">GitHub ↗</a></span>`;
+      const links = p.private ? `<span class="seal" title="${t('privHint')}">${t('priv')}</span>`
+        : `<span class="links">${p.site ? `<a href="${esc(p.site)}">${t('site')}</a>` : ''}<a href="${esc(p.repo)}">GitHub ↗</a></span>`;
       const log = p.private
-        ? `${redact(p.title, 3)}<p class="hush">commit 內容不公開</p>`
+        ? `${redact(p.title, 3)}<p class="hush">${t('hush')}</p>`
         : `<ul>${p.recent.slice(0, 3).map((c) => `<li><time>${md(dayOf(Date.parse(c.t)))}</time><span title="${esc(c.m)}">${esc(c.m)}</span></li>`).join('')}</ul>`;
-      const tags = [p.lang, ...(p.tags || [])].filter(Boolean);
+      const tags = [p.lang, ...(p.tags || []).map(tag)].filter(Boolean);
       const heat = fixedLevel(Math.ceil(week / 3));
-      const initial = esc([...p.title][0]);
+      const name = pTitle(p), sum = pSummary(p);
+      const initial = esc([...name][0]);
       const mono = `<span class="ico mono" aria-hidden="true">${initial}</span>`;
       const ico = p.icon ? `<img class="ico" src="${esc(p.icon)}" alt="" loading="lazy" data-mono="${initial}">` : mono;
       return `<article class="card rv" data-kind="${kindOf(p)}" data-vis="${p.private ? 'private' : 'public'}"${heat ? ` style="--heat:var(--h${heat})"` : ''}>
-        <header>${ico}<h3>${esc(p.title)}</h3>${links}</header>
-        ${p.summary ? `<p class="sum">${esc(p.summary)}</p>` : ''}
-        <div class="cells" style="--cols:${MINI_WEEKS}" role="img" aria-label="${esc(p.title)} 近半年的 commit 熱力圖">${cells(p.days, MINI_WEEKS, fixedLevel, today)}</div>
-        <div class="nums"><span${week >= 10 ? ' class="hot"' : ''}><b>${week}</b>近 7 天</span><span><b>${p.year}</b>近一年</span><span><b>${p.total}</b>累計</span></div>
-        <div class="log"><h4>最後更新 <time data-rel="${esc(p.last)}" title="${exact(p.last)}">${rel(p.last)}</time></h4>${log}</div>
+        <header>${ico}<h3>${esc(name)}</h3>${links}</header>
+        ${sum ? `<p class="sum">${esc(sum)}</p>` : ''}
+        <div class="cells" style="--cols:${MINI_WEEKS}" role="img" aria-label="${esc(t('miniAria', name))}">${cells(p.days, MINI_WEEKS, fixedLevel, today)}</div>
+        <div class="nums"><span${week >= 10 ? ' class="hot"' : ''}><b>${week}</b>${t('d7')}</span><span><b>${p.year}</b>${t('y1')}</span><span><b>${p.total}</b>${t('all')}</span></div>
+        <div class="log"><h4>${t('lastUpdate')} <time data-rel="${esc(p.last)}" title="${exact(p.last)}">${rel(p.last)}</time></h4>${log}</div>
         ${tags.length ? `<div class="tags">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
       </article>`;
-    }).join('') + '<p class="empty" id="none" hidden>沒有符合的專案</p>';
+    }).join('') + `<p class="empty" id="none" hidden>${t('none')}</p>`;
 
     // ── 較早的專案：一格一週 ──
     $('old').innerHTML = older.map((p) => {
@@ -741,9 +758,9 @@ import { createCity } from './city.js';
         const w = Math.floor((dayMs(d) - dayMs(start)) / (7 * DAY));
         if (w >= 0 && w < WEEKS) weeks[w] += n;
       }
-      const name = p.private ? `${esc(p.title)}<span class="seal">非公開</span>` : `<a href="${esc(p.site || p.repo)}">${esc(p.title)} ↗</a>`;
+      const name = p.private ? `${esc(pTitle(p))}<span class="seal">${t('priv')}</span>` : `<a href="${esc(p.site || p.repo)}">${esc(pTitle(p))} ↗</a>`;
       return `<li class="rv" data-kind="${kindOf(p)}" data-vis="${p.private ? 'private' : 'public'}">
-        <div><div class="t">${name}</div><div class="s">${esc(p.summary)}</div></div>
+        <div><div class="t">${name}</div><div class="s">${esc(pSummary(p))}</div></div>
         <div class="strip" aria-hidden="true">${weeks.map((n) => `<i data-l="${fixedLevel(Math.ceil(n / 2))}"></i>`).join('')}</div>
         <div class="c">${p.total}<small> commits</small></div>
         <div class="w"><time data-rel="${esc(p.last)}" title="${exact(p.last)}">${rel(p.last)}</time></div>
@@ -753,17 +770,18 @@ import { createCity } from './city.js';
     // ── 都幾點動工 ──
     const bars = (values, label) => {
       const max = Math.max(1, ...values);
-      return values.map((v, i) => `<i style="--v:${(v / max).toFixed(3)}"${v === max ? ' class="peak"' : ''} data-tip="<b>${label(i)}</b> · ${v} 個 commit"></i>`).join('');
+      return values.map((v, i) => `<i style="--v:${(v / max).toFixed(3)}"${v === max ? ' class="peak"' : ''} data-tip="<b>${label(i)}</b> · ${t('commits', v)}"></i>`).join('');
     };
     const hours = data.hours || [], wds = data.weekdays || [];
-    $('hours').innerHTML = bars(hours, (h) => `${h}:00–${h}:59`);
-    $('weekdays').innerHTML = bars(wds, (d) => `星期${WD[d]}`);
+    $('hours').innerHTML = bars(hours, (h) => t('hourRange', h));
+    $('weekdays').innerHTML = bars(wds, (d) => t('wdLong', d));
+    $('hour-axis').innerHTML = t('hourAxis').map((x) => `<span>${x}</span>`).join('');
+    $('wd-axis').innerHTML = t('wdAxis').map((x) => `<span>${x}</span>`).join('');
     if (hours.length) {
       const peakH = hours.indexOf(Math.max(...hours)), peakD = wds.indexOf(Math.max(...wds));
-      const part = peakH < 5 ? '凌晨' : peakH < 12 ? '早上' : peakH < 18 ? '下午' : '晚上';
-      $('rhythm-note').textContent = `最常在${part} ${peakH > 12 ? peakH - 12 : peakH} 點動工 · 最忙的是星期${WD[peakD]}`;
-      $('hours').setAttribute('aria-label', `一天 24 小時的 commit 分布，高峰在 ${peakH} 點`);
-      $('weekdays').setAttribute('aria-label', `一週七天的 commit 分布，高峰在星期${WD[peakD]}`);
+      $('rhythm-note').textContent = t('rhythm', peakH, peakD);
+      $('hours').setAttribute('aria-label', t('hoursAria', peakH));
+      $('weekdays').setAttribute('aria-label', t('wdAria', peakD));
     }
 
     applyFilter();
@@ -782,12 +800,12 @@ import { createCity } from './city.js';
   let tipData = null;
   const tip = $('tip');
   function showTip(d, n, breakdown, x, y, extra) {
-    let html = `<b>${d.replaceAll('-', '/')}</b> 週${WD[wdOf(d)]} · ${n ? `${n} 個 commit` : '沒有動工'}`;
+    let html = `<b>${d.replaceAll('-', '/')}</b> ${t('wd', wdOf(d))} · ${n ? t('commits', n) : t('noCommits')}`;
     if (n && breakdown) {
       const rows = tipData.projects.filter((p) => p.days[d]).sort((a, b) => b.days[d] - a.days[d]);
-      const top = rows.slice(0, 5).map((p) => `<li><span>${esc(p.title)}</span><span>${p.days[d]}</span></li>`);
+      const top = rows.slice(0, 5).map((p) => `<li><span>${esc(pTitle(p))}</span><span>${p.days[d]}</span></li>`);
       const rest = n - rows.slice(0, 5).reduce((s, p) => s + p.days[d], 0);
-      if (rest > 0) top.push(`<li><span>其他</span><span>${rest}</span></li>`);
+      if (rest > 0) top.push(`<li><span>${t('other')}</span><span>${rest}</span></li>`);
       html += `<ul>${top.join('')}</ul>`;
     }
     if (extra) html += `<span class="x">${extra}</span>`;
@@ -834,7 +852,7 @@ import { createCity } from './city.js';
       data = next;
       render(first);
     } catch (err) {
-      if (!data) $('status').textContent = 'Build log · 資料載入失敗';
+      if (!data) $('status').textContent = t('loadFail');
       console.error(err);
     }
   }
