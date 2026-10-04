@@ -35,7 +35,7 @@ export const PALETTES = {
     h: [null, '#c3d0e6', '#8ba3cf', '#4d6fb0', '#1e3d7e'], front: 0.14, side: 0.32,
     win: 'rgba(255,255,255,.62)', winPct: 62, glow: false, night: false,
     sun: '#f5b83d', ray: '#f0a72b', halo: 'rgba(245,184,61,.2)', cloud: '#dde6f1',
-    dirt: '#dcc9a2', pants: '#2f3b52',
+    dirt: '#dcc9a2', pants: '#2f3b52', road: 'rgba(28,26,23,.24)', dash: 'rgba(255,255,255,.75)',
     grass: ['#a9cf93', '#9bc486'], canopy: '#4e8d4b', canopyHi: '#7ab36c', trunk: '#7a5a3a', water: '#9cc9e8',
     ground: 'rgba(28,26,23,.11)', cell0: 'rgba(28,26,23,.08)', rule: 'rgba(28,26,23,.16)',
     seal: '#c23a22', ink: '#1c1a17', muted: '#736b5e',
@@ -44,7 +44,7 @@ export const PALETTES = {
     h: [null, '#1f2d4d', '#2c447a', '#4166b3', '#6b93e6'], front: 0.2, side: 0.45,
     win: 'rgba(255,216,138,.92)', winPct: 46, glow: true, night: true,
     moon: '#f4e9c1', halo: 'rgba(244,233,193,.1)', star: '#ffffff',
-    dirt: '#40382a', pants: '#a9b8d6',
+    dirt: '#40382a', pants: '#a9b8d6', road: 'rgba(235,229,214,.11)', dash: 'rgba(235,229,214,.4)',
     grass: ['#22402a', '#1d3724'], canopy: '#3c7a45', canopyHi: '#5eaa63', trunk: '#5b4630', water: '#2b5a80',
     ground: 'rgba(235,229,214,.06)', cell0: 'rgba(235,229,214,.09)', rule: 'rgba(235,229,214,.17)',
     seal: '#f0674c', ink: '#ebe5d6', muted: '#9a917f',
@@ -85,6 +85,14 @@ export function layout({ total, level, today, W, weeks }) {
     if (m !== prev && c < weeks - 1) labels.push({ x: pad + c * pitch, text: `${+m.slice(5)}月` });
     prev = m;
   }
+  // 連續沒動工到第幾天（越久綠地越茂密）
+  const idle = {};
+  for (let i = 0, run = 0; i < weeks * 7; i++) {
+    const d = addDays(start, i);
+    if (d > today) break;
+    run = total[d] ? 0 : run + 1;
+    idle[d] = run;
+  }
   // 由後排畫到前排，同一排由左到右，前面的才會蓋住後面的
   const towers = [];
   for (let r = 0; r < 7; r++) for (let c = 0; c < weeks; c++) {
@@ -97,24 +105,40 @@ export function layout({ total, level, today, W, weeks }) {
     }
     const n = total[d] || 0;
     towers.push({
-      d, n, c, l: level(n), seed: hash(d),
+      d, n, c, l: level(n), seed: hash(d), idle: idle[d],
       x, y,
       h: n ? 9 + (maxH - 18) * Math.sqrt(n / peak) : 0,
     });
   }
-  const front = top + 7 * sy + 3, back = top + sy - oy - 3;
+  // 這一年最高的一棟，樓頂插旗
+  const best = towers.reduce((a, t) => (t.n > (a ? a.n : 0) ? t : a), null);
+  if (best) best.peak = true;
+  // 最前排外面是一條馬路
+  const front = top + 7 * sy + 3, back = top + sy - oy - 3, roadW = small ? 9 : 13;
   const left = pad - 3, right = pad + weeks * pitch - (pitch - bw) + 3, lean = 6 * sx + ox;
   return {
     today, towers, labels, top,
+    road: { x0: left, x1: right, y: front, h: roadW },
     celestial: { x: W - (small ? 24 : 42), y: small ? 20 : 27, r: small ? 11 : 15 },
     ground: [[left, front], [right, front], [right + lean, back], [left + lean, back]],
-    g: { W, H: Math.ceil(top + 7 * sy + 26), bw, ox, oy, maxH, weeks, labelY: top + 7 * sy + 19 },
+    g: { W, H: Math.ceil(top + 7 * sy + 26 + roadW), bw, ox, oy, maxH, weeks, labelY: top + 7 * sy + 19 + roadW },
   };
 }
 
 // 天空：白天是太陽和雲，夜景是月亮和星星。畫在最底層，會被樓擋住
-export function backdrop(lay, pal) {
-  const { x, y, r } = lay.celestial, W = lay.g.W, out = [];
+export function roadPrims(lay, pal) {
+  const { x0, x1, y, h } = lay.road, dashes = [];
+  for (let x = x0 + 6; x < x1 - 8; x += 18) dashes.push([x, y + h / 2 - 0.5, 8, 1]);
+  return [
+    { k: 'poly', pts: [[x0, y], [x1, y], [x1, y + h], [x0, y + h]], fill: pal.road },
+    { k: 'rects', rects: dashes, fill: pal.dash },
+  ];
+}
+
+// orb：太陽／月亮的位置（首頁會依台北時間移動；沒給就固定在右上角）。warm：0–1，晚霞的程度
+export function backdrop(lay, pal, { orb, warm = 0 } = {}) {
+  const { x, y, r } = orb ?? lay.celestial, W = lay.g.W, out = [];
+  const sun = warm > 0.35 ? { sun: '#f2803a', ray: '#e8642a', halo: 'rgba(242,128,58,.26)' } : pal;
   if (pal.night) {
     for (let i = 0, n = Math.round(W / 16); i < n; i++) {
       const a = pick(977, i * 3), sx = 4 + (a % (W - 8)), sy = 4 + (pick(977, i * 3 + 1) % Math.max(20, lay.top - 30));
@@ -129,17 +153,18 @@ export function backdrop(lay, pal) {
     out.push({ k: 'path', d: `M${f(px)} ${f(y - dy)}A${r} ${r} 0 1 0 ${f(px)} ${f(y + dy)}A${r} ${r} 0 0 1 ${f(px)} ${f(y - dy)}Z`, fill: pal.moon, glow: pal.moon });
   } else {
     const s = r / 15;
-    for (const [cx, cy, k] of [[W * 0.56, y - 4 * s, 1], [W * 0.76, y + 12 * s, 0.8]]) {
+    const cy0 = lay.celestial.y;
+    for (const [cx, cy, k] of [[W * 0.56, cy0 - 4 * s, 1], [W * 0.76, cy0 + 12 * s, 0.8]]) {
       for (const [dx, dy2, rx, ry] of [[-11, 3, 10, 6], [0, -2, 12, 8], [12, 3, 10, 6]]) {
         out.push({ k: 'ellipse', cx: cx + dx * s * k, cy: cy + dy2 * s * k, rx: rx * s * k, ry: ry * s * k, fill: pal.cloud });
       }
     }
-    out.push({ k: 'ellipse', cx: x, cy: y, rx: r * 1.75, ry: r * 1.75, fill: pal.halo });
+    out.push({ k: 'ellipse', cx: x, cy: y, rx: r * 1.75, ry: r * 1.75, fill: sun.halo });
     for (let i = 0; i < 8; i++) {
       const a = (i * Math.PI) / 4;
-      out.push({ k: 'line', pts: [[x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3], [x + Math.cos(a) * r * 1.62, y + Math.sin(a) * r * 1.62]], stroke: pal.ray, w: 2 * s });
+      out.push({ k: 'line', pts: [[x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3], [x + Math.cos(a) * r * 1.62, y + Math.sin(a) * r * 1.62]], stroke: sun.ray, w: 2 * s });
     }
-    out.push({ k: 'ellipse', cx: x, cy: y, rx: r, ry: r, fill: pal.sun });
+    out.push({ k: 'ellipse', cx: x, cy: y, rx: r, ry: r, fill: sun.sun });
   }
   return out;
 }
@@ -172,6 +197,7 @@ export function prims(t, h, g, pal, flags = {}) {
   // 小工人：腳站在 (wx, wy)。手和工具有兩個姿勢（cls p0／p1）輪流出現，看起來就在動
   const ws = Math.max(0.95, Math.min(1.85, bw / 9));
   const worker = (wx, wy, tool) => {
+    if (flags.shift === 'off') return;   // 收工了
     const s = ws, L = (pts, stroke, w, cls) => out.push({ k: 'line', pts, stroke, w: w * s, cls });
     L([[wx - 1.1 * s, wy], [wx - 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
     L([[wx + 1.1 * s, wy], [wx + 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
@@ -195,6 +221,23 @@ export function prims(t, h, g, pal, flags = {}) {
       }
       return;
     }
+    if (flags.cheer) {
+      // 有新的 commit：雙手舉高歡呼
+      for (const [cls, a, b] of [['p0', 2.6, 10.6], ['p1', 3.7, 9.7]]) {
+        L([sh, [wx + a * s, wy - b * s]], CREW.skin, 1.1, cls);
+        L([[wx - 1.4 * s, wy - 6.5 * s], [wx - a * s, wy - b * s]], CREW.skin, 1.1, cls);
+      }
+      return;
+    }
+    if (flags.shift === 'lunch') {
+      // 午休：捧著便當，一口一口吃
+      out.push({ k: 'rects', rects: [[wx + 0.6 * s, wy - 5.9 * s, 3 * s, 1.7 * s]], fill: '#fff6e0' });
+      out.push({ k: 'ellipse', cx: wx + 2.1 * s, cy: wy - 5.1 * s, rx: 0.45 * s, ry: 0.45 * s, fill: '#d6452f' });
+      L([sh, [wx + 2.6 * s, wy - 5.6 * s]], CREW.skin, 1.1, 'p0');
+      L([sh, [wx + 2.3 * s, wy - 7 * s], [wx + 1 * s, wy - 7.7 * s]], CREW.skin, 1.1, 'p1');
+      return;
+    }
+    if (flags.shift === 'overtime') out.push({ k: 'text', x: wx + s, y: wy - 12.2 * s, text: '加班中', size: 5.2 * s, fill: pal.seal });
     if (tool === 'hammer') {
       L([sh, [wx + 3.4 * s, wy - 8.8 * s]], CREW.skin, 1.1, 'p0');
       L([[wx + 3.4 * s, wy - 8.8 * s], [wx + 4.6 * s, wy - 10.6 * s]], CREW.wood, 0.9, 'p0');
@@ -227,6 +270,8 @@ export function prims(t, h, g, pal, flags = {}) {
       out.push({ k: 'line', pts: [[bx + bwid - 0.8, by], [bx + bwid - 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
       out.push({ k: 'rects', rects: [[bx, by, bwid, bh]], fill: CREW.cone });
       out.push({ k: 'rects', rects: [0.12, 0.42, 0.72].map((p) => [bx + bwid * p, by, bwid * 0.15, bh]), fill: CREW.white });
+      // 收工後留一盞警示燈
+      if (flags.shift === 'off') out.push({ k: 'ellipse', cx: bx + bwid / 2, cy: by - 1.8 * s, rx: 1.5 * s, ry: 1.5 * s, fill: CREW.hat, glow: CREW.hat });
     } else if (t.lot === 2) {
       out.push({ k: 'poly', pts: [[cx - 2.6 * s, cy + 1], [cx + 2.6 * s, cy + 1], [cx, cy - 6.5 * s]], fill: CREW.cone });
       out.push({ k: 'line', pts: [[cx - 1.3 * s, cy - 2.4 * s], [cx + 1.3 * s, cy - 2.4 * s]], stroke: CREW.white, w: 1.2 * s });
@@ -237,9 +282,10 @@ export function prims(t, h, g, pal, flags = {}) {
     return out;
   }
   if (!t.n) {
-    // 綠地：草皮，上面隨機長一兩棵樹，偶爾是水池
+    // 綠地：草皮，上面隨機長一兩棵樹，偶爾是水池。連續沒動工越久越茂密，最後變成小森林
+    const dense = t.idle >= 8 ? 2 : t.idle >= 4 ? 1 : 0;
     roof = roofOf(x, y, bw, ox, oy);
-    out.push({ k: 'poly', pts: roof, fill: flags.lit ? pal.seal : pal.grass[t.seed % 2] });
+    out.push({ k: 'poly', pts: roof, fill: flags.lit ? pal.seal : shade(pal.grass[t.seed % 2], dense * 0.07) });
     cx = x + bw / 2 + ox / 2; cy = y - oy / 2;
     const s = Math.max(0.6, Math.min(1, bw / 16)), kind = (t.seed >>> 3) % 100;
     const tree = (tx, ty, r) => {
@@ -248,9 +294,14 @@ export function prims(t, h, g, pal, flags = {}) {
       out.push({ k: 'ellipse', cx: tx - r * 0.3, cy: ty - r * 2.3, rx: r * 0.45, ry: r * 0.45, fill: pal.canopyHi });
     };
     const r = (3 + ((t.seed >>> 12) % 3) * 0.7) * s;
-    if (kind < 7) out.push({ k: 'ellipse', cx, cy, rx: bw * 0.3, ry: oy * 0.3, fill: pal.water });
-    else if (kind < 48) tree(cx + (((t.seed >>> 9) % 5) - 2) * 0.7 * s, cy + 1, r);
-    else if (kind < 72) { tree(cx + bw * 0.2, cy - oy * 0.15, r * 0.85); tree(cx - bw * 0.2, cy + oy * 0.2, r); }
+    const count = Math.min(3, (kind < 48 ? 1 : kind < 72 ? 2 : 0) + dense);
+    if (kind < 7 && !dense) out.push({ k: 'ellipse', cx, cy, rx: bw * 0.3, ry: oy * 0.3, fill: pal.water });
+    else if (count === 1) tree(cx + (((t.seed >>> 9) % 5) - 2) * 0.7 * s, cy + 1, r);
+    else if (count >= 2) {
+      tree(cx + bw * 0.2, cy - oy * 0.15, r * 0.85);
+      if (count === 3) tree(cx, cy - oy * 0.05, r * 1.15);
+      tree(cx - bw * 0.2, cy + oy * 0.2, r);
+    }
   } else {
     const color = pal.h[t.l], k = h / t.h;
     if (t.h <= g.maxH * 0.55) {
@@ -267,7 +318,10 @@ export function prims(t, h, g, pal, flags = {}) {
       windows(ux, uy, uw, hu, 2);
       cx = ux + uw / 2 + ox * 0.25; cy = uy - hu - oy * 0.25;
     }
-    if (t.l === 4 && t.seed % 3 && k > 0.98 && !flags.today) {
+    if (t.peak && k > 0.98 && !flags.today) {
+      out.push({ k: 'line', pts: [[cx, cy], [cx, cy - 13]], stroke: pal.ink, w: 1.2 });
+      out.push({ k: 'poly', pts: [[cx, cy - 13], [cx + 8, cy - 10.2], [cx, cy - 7.4]], fill: pal.seal });
+    } else if (t.l === 4 && t.seed % 3 && k > 0.98 && !flags.today) {
       out.push({ k: 'line', pts: [[cx, cy], [cx, cy - 9]], stroke: shade(color, 0.3), w: 1 });
       out.push({ k: 'ellipse', cx, cy: cy - 9, rx: 1.4, ry: 1.4, fill: pal.seal });
     }
@@ -297,6 +351,7 @@ function emit(p) {
   return p.cls ? shape(p).replace(/^<\w+/, (m) => `${m} class="${p.cls}"`) : shape(p);
 }
 function shape(p) {
+  if (p.k === 'text') return `<text x="${f(p.x)}" y="${f(p.y)}" text-anchor="middle" font-family="${SANS}" font-size="${f(p.size)}" font-weight="700" fill="${p.fill}">${xml(p.text)}</text>`;
   if (p.k === 'rects') return `<path d="${p.rects.map(([x, y, w, h]) => `M${f(x)} ${f(y)}h${f(w)}v${f(h)}h${-f(w)}z`).join('')}" fill="${p.fill}"/>`;
   if (p.k === 'ellipse') return `<ellipse cx="${f(p.cx)}" cy="${f(p.cy)}" rx="${f(p.rx)}" ry="${f(p.ry)}" fill="${p.fill}"${p.alpha ? ` opacity="${f(p.alpha)}"` : ''}/>`;
   if (p.k === 'path') return `<path d="${p.d}" fill="${p.fill}"/>`;
@@ -304,15 +359,33 @@ function shape(p) {
   return `<path d="${d}" fill="${p.fill ?? 'none'}"${p.stroke ? ` stroke="${p.stroke}" stroke-width="${p.w || 1.5}"` : ''}/>`;
 }
 
+// animate：工人的兩個姿勢用 CSS 動畫輪流顯示；轉成 PNG 這類靜態圖時要關掉，只留一個姿勢
+function sceneMarkup(lay, pal, animate = true) {
+  const { g } = lay, el = [];
+  if (animate) el.push('<style>.p0{animation:a 1s infinite}.p1{animation:b 1s infinite}@keyframes a{0%,49.9%{opacity:1}50%,100%{opacity:0}}@keyframes b{0%,49.9%{opacity:0}50%,100%{opacity:1}}</style>');
+  const all = [...backdrop(lay, pal), { k: 'poly', pts: lay.ground, fill: pal.ground }, ...roadPrims(lay, pal)];
+  for (const t of lay.towers) all.push(...prims(t, t.h, g, pal, { today: t.d === lay.today }));
+  for (const p of all) if (animate || p.cls !== 'p1') el.push(animate ? emit(p) : shape(p));
+  for (const l of lay.labels) el.push(`<text x="${f(l.x)}" y="${g.labelY}" font-family="${MONO}" font-size="11" fill="${pal.muted}">${l.text}</text>`);
+  return el.join('');
+}
+
 export function toSVG(lay, pal, { caption, label } = {}) {
   const { g } = lay, H = g.H + (caption ? 28 : 0);
-  const el = [...backdrop(lay, pal).map(emit), emit({ k: 'poly', pts: lay.ground, fill: pal.ground })];
-  for (const t of lay.towers) for (const p of prims(t, t.h, g, pal, { today: t.d === lay.today })) el.push(emit(p));
-  // 工人的兩個姿勢輪流顯示（README 裡的圖也會動）
-  el.unshift('<style>.p0{animation:a 1s infinite}.p1{animation:b 1s infinite}@keyframes a{0%,49.9%{opacity:1}50%,100%{opacity:0}}@keyframes b{0%,49.9%{opacity:0}50%,100%{opacity:1}}</style>');
-  for (const l of lay.labels) el.push(`<text x="${f(l.x)}" y="${g.labelY}" font-family="${MONO}" font-size="11" fill="${pal.muted}">${l.text}</text>`);
-  if (caption) el.push(`<text x="4" y="${g.H + 16}" font-family="${SANS}" font-size="13" fill="${pal.ink}">${xml(caption)}</text>`);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.W} ${H}" width="${g.W}" height="${H}" role="img" aria-label="${xml(label || '')}">${el.join('')}</svg>\n`;
+  const cap = caption ? `<text x="4" y="${g.H + 16}" font-family="${SANS}" font-size="13" fill="${pal.ink}">${xml(caption)}</text>` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.W} ${H}" width="${g.W}" height="${H}" role="img" aria-label="${xml(label || '')}">${sceneMarkup(lay, pal)}${cap}</svg>\n`;
+}
+
+// 社群分享預覽圖（1200×630）。之後會轉成 PNG，所以是靜態的、底色寫死
+export function ogSVG(lay, pal, { title, sub, stats }) {
+  const paper = '#f3eee3', line = 'rgba(28,26,23,.07)';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">`
+    + `<defs><pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="${line}" stroke-width="1.5"/></pattern></defs>`
+    + `<rect width="1200" height="630" fill="${paper}"/><rect width="1200" height="630" fill="url(#grid)"/>`
+    + `<text x="58" y="150" font-family="${SANS}" font-size="88" font-weight="800" fill="${pal.ink}">${xml(title)}</text>`
+    + `<text x="62" y="208" font-family="${SANS}" font-size="29" fill="${pal.muted}">${xml(sub)}</text>`
+    + `<text x="62" y="254" font-family="${SANS}" font-size="27" font-weight="700" fill="${pal.ink}">${xml(stats)}</text>`
+    + `<g transform="translate(${(1200 - lay.g.W) / 2} ${622 - lay.g.H})">${sceneMarkup(lay, pal, false)}</g></svg>\n`;
 }
 
 // rows: [{ title, private, weeks: number[], year, last }]
