@@ -1,0 +1,155 @@
+{
+  "owner": "chung223",
+  "utcOffsetMinutes": 480,
+  "projects": {
+    "ppnote": {
+      "title": "Folium",
+      "summary": "取代 Acrobat Pro 的 PDF 工作站，手寫是一等功能。iPhone、iPad、Mac 原生。",
+      "tags": ["iOS", "iPadOS", "macOS"]
+    },
+    "pastee": {
+      "title": "貼貼 Pastee",
+      "summary": "原生 Swift 剪貼簿管理工具，Mac、iPhone、iPad 以 iCloud 即時同步，iOS 上另有貼貼鍵盤。",
+      "tags": ["iOS", "macOS"]
+    },
+    "Murmo": {
+      "title": "Murmo",
+      "summary": "完全在本機執行的 macOS 語音助手：語音輸入、即時口譯字幕、會議紀錄、筆記問答。",
+      "tags": ["macOS"]
+    },
+    "layer": {
+      "title": "層 · Ceng",
+      "summary": "個人知識庫的原生版：macOS 桌面版、iPhone 版與分享選單擴充，SwiftUI。",
+      "tags": ["iOS", "macOS"]
+    },
+    "wiki-chung-men": {
+      "title": "個人知識庫 Wiki",
+      "summary": "自架的個人知識庫：條目、知識圖譜，並提供 API 給原生 App 與 AI 工具使用。",
+      "tags": ["Web"]
+    },
+    "cyber-banxian": {
+      "title": "賽博半仙 CyberBanxian",
+      "summary": "八字、紫微、占星、人類圖、塔羅加上 AI 諮商的多功能命理 PWA。",
+      "tags": ["PWA"]
+    },
+    "kaijiang": {
+      "title": "開講",
+      "summary": "一句話生出一份能上台講的簡報：AI 生成、現場互動、逐字稿與語音。",
+      "tags": ["Web"]
+    },
+    "want-money": {
+      "title": "潮汛 Tide & Timing",
+      "summary": "台股／ETF 選股建議與買賣時機訊號系統，自架後端，PWA 加推播。",
+      "tags": ["PWA"]
+    },
+    "thin-planet": {
+      "title": "瘦瘦星球",
+      "summary": "跟朋友一起減肥競賽的 PWA：打卡積分、隱私排行、AI 看圖算卡路里、推播。",
+      "tags": ["PWA"]
+    },
+    "yunyun": {
+      "title": "LINE 預約與教室租借系統",
+      "summary": "給工作室用的 LINE 預約系統：會員與老師端 LIFF、後台、排程提醒。",
+      "tags": ["LINE", "Web"]
+    },
+    "forms-fourh-org-tw": {
+      "title": "協會內部行政系統",
+      "summary": "工作上維護的帳務、表單與差勤系統，含手機版 PWA。",
+      "tags": ["工作", "Web"]
+    },
+    "fourh-enrollment": {
+      "title": "營隊選課系統",
+      "summary": "高中營隊的搶課與二階段選課系統，Vue 3 加 Firebase。",
+      "tags": ["工作", "Web"]
+    },
+    "summit-fourh-org-tw": {
+      "title": "國際年會活動網站",
+      "summary": "雙語單頁活動網站。",
+      "tags": ["工作", "Web"]
+    },
+    "razzia": {
+      "title": "自架問答競賽平台",
+      "summary": "以開源專案 Razzia 為底的客製版，活動現場用的即時問答。",
+      "tags": ["Web"]
+    },
+    "mingwen-expedition": {
+      "title": "明文遠征",
+      "summary": "溝通練習 PWA：每日打卡加遊戲化機制。",
+      "tags": ["PWA"]
+    },
+    "wish-jar": {
+      "title": "心願存錢筒",
+      "summary": "玻璃擬態風格的存錢目標小工具。",
+      "tags": ["Web"]
+    },
+
+    "fly-enclave": { "aggregateOnly": true },
+    "family-fourh-hostmatch": { "aggregateOnly": true },
+    "md-iphone-shortcut": { "aggregateOnly": true },
+
+    "chung223.github.io": {
+      "title": "這個網站",
+      "summary": "你正在看的個人首頁：GitHub Actions 定時抓 commit 紀錄，產生熱力圖與更新動態。"
+    },
+    "as-jx": {
+      "title": "哩程玩家工具箱",
+      "summary": "哩程票與現金票攻略：中停哩程計算機、兌換表比較、四段票排程器、空中動態。",
+      "tags": ["Web"]
+    },
+    "tymetrofast": {
+      "title": "機捷快轉",
+      "summary": "桃園機場捷運快速轉乘計算器：直達車加轉乘怎麼搭最快，含航班看板與高鐵餘票。",
+      "tags": ["PWA"]
+    },
+    "Appprize": {
+      "title": "AppPrize",
+      "summary": "跨區訂閱比價：貼上 App Store 連結，比較各國訂閱價並換算新台幣，找出最省的那一區。",
+      "tags": ["Web"]
+    },
+    "share-money": {
+      "title": "반반 BanBan 半半分帳",
+      "summary": "你先付，我來算。給常常代墊的人用的分帳小工具，可掃發票、拍照辨識明細。",
+      "tags": ["PWA"]
+    },
+    "cat-dog": {
+      "title": "謎陣 Grid Hunt",
+      "summary": "100 關邏輯推理謎題加每日挑戰，主角可以換成貓咪、柴犬、珍奶或電鍋。",
+      "tags": ["遊戲"]
+    },
+    "ah": {
+      "title": "唉。嘆氣計數器",
+      "summary": "記下每一聲「唉」，看看自己什麼時候、為了什麼而嘆氣。資料只存在裝置裡。",
+      "tags": ["PWA"]
+    },
+    "doze": {
+      "title": "骰寶練習桌",
+      "summary": "用假籌碼練骰寶，開骰之前就看見每一組注碼的長期期望值。",
+      "tags": ["PWA"]
+    },
+    "Competition": {
+      "title": "競賽名次計算工具",
+      "summary": "給承辦人用的競賽成績計算：名次法、並列與決勝、獎項分配，可離線使用。",
+      "tags": ["Web"]
+    },
+    "g923": {
+      "title": "g923-mac",
+      "summary": "讓 Logitech G923 方向盤在 Apple Silicon Mac 上有力回饋，不用 kext、不用關 SIP。",
+      "tags": ["macOS"]
+    },
+    "mindkiln": {
+      "title": "女媧工坊 Nuwa Studio",
+      "summary": "從一堆文件裡蒸餾出一個人的思維框架，可以對話、也可以預測他會怎麼想。",
+      "tags": ["AI"]
+    },
+    "daily-lab": {
+      "title": "Daily Lab",
+      "summary": "每天凌晨 3 點由 AI 自動做出來的驚喜小專案。",
+      "tags": ["AI"]
+    },
+
+    "pastee-privacy": { "hide": true },
+    "kaku-support": { "hide": true },
+    "murmo-releases": { "hide": true },
+    "tw-card-cash-back": { "hide": true }
+  }
+}

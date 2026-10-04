@@ -3,298 +3,724 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#120f0a">
-<meta name="description" content="旅人工具導覽：機捷快轉（機場交通）× 哩程玩家工具箱（票務哩程）">
-<title>旅人工具箱｜機捷快轉 × 哩程玩家</title>
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1c1a17">
+<meta name="description" content="Chung 的開發手帳：正在做的 App、PWA 與小工具，附自動更新的 commit 熱力圖與最近動態。">
+<title>Chung 的開發手帳</title>
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="旅人工具箱">
-<meta property="og:title" content="旅人工具箱｜機捷快轉 × 哩程玩家">
-<meta property="og:description" content="打開三秒看完：下一班機捷、航班動態。機場交通與哩程票務兩套工具的入口。">
-<meta property="og:image" content="https://chung223.github.io/og.png">
-<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta property="og:title" content="Chung 的開發手帳">
+<meta property="og:description" content="正在做的 App、PWA 與小工具，附自動更新的 commit 熱力圖與最近動態。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='5' fill='%23c23a22'/%3E%3Cg fill='%23f3eee3'%3E%3Crect x='8' y='8' width='6' height='6' rx='1'/%3E%3Crect x='18' y='8' width='6' height='6' rx='1' opacity='.55'/%3E%3Crect x='8' y='18' width='6' height='6' rx='1' opacity='.55'/%3E%3Crect x='18' y='18' width='6' height='6' rx='1'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
-<script>try{const t=localStorage.getItem('trav-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}</script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script>try{const t=localStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}</script>
 <style>
   :root{
-    --bg:#16120c; --surface:#1f1913; --raised:#2a2216;
-    --line:rgba(212,175,110,.16); --line-strong:rgba(212,175,110,.32);
-    --ink:#f0e8d8; --muted:#a29377; --gold:#d4af6e; --gold-deep:#8a6d3b;
-    --purple:#b995d8; --purple-deep:#8e4e9e;
+    --paper:#f3eee3; --card:#fbf8f1; --ink:#1c1a17; --muted:#736b5e;
+    --rule:rgba(28,26,23,.16); --rule-soft:rgba(28,26,23,.08); --seal:#c23a22;
+    --h0:rgba(28,26,23,.07); --h1:#c3d0e6; --h2:#8ba3cf; --h3:#4d6fb0; --h4:#1e3d7e;
+    --glow:none; --blob-a:rgba(77,111,176,.20); --blob-b:rgba(194,58,34,.13);
+    --kai:"LXGW WenKai TC","Noto Serif TC",serif;
+    --sans:"Noto Sans TC",system-ui,sans-serif;
+    --mono:"DM Mono",ui-monospace,Menlo,monospace;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:
-      radial-gradient(1100px 500px at 75% -10%, rgba(212,175,110,.10), transparent 60%),
-      radial-gradient(800px 400px at -5% 30%, rgba(142,78,158,.09), transparent 55%),
-      var(--bg);
-    color:var(--ink); font-family:"Noto Sans TC",sans-serif; line-height:1.6;
-    min-height:100dvh; display:flex; flex-direction:column; align-items:center;
-    padding:min(9vh,72px) 18px 40px;
-  }
-  h1{font:900 clamp(30px,6vw,44px)/1.25 "Noto Serif TC",serif; letter-spacing:.12em; text-align:center}
-  .sub{color:var(--muted); font-size:14px; letter-spacing:.28em; text-align:center; margin:8px 0 40px}
-  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; width:min(860px,100%)}
-  .card{
-    display:block; text-decoration:none; color:inherit;
-    background:linear-gradient(180deg,var(--raised),var(--surface));
-    border:1px solid var(--line); border-radius:18px; padding:26px 24px;
-    box-shadow:0 18px 40px -18px rgba(0,0,0,.55);
-    transition:transform .15s, border-color .15s;
-  }
-  .card:hover{transform:translateY(-3px); border-color:var(--line-strong)}
-  .card .tag{display:inline-block; font-size:11px; letter-spacing:.22em; color:var(--muted); margin-bottom:10px}
-  .card h2{font:900 24px/1.3 "Noto Serif TC",serif; letter-spacing:.06em}
-  .card.mrt h2{color:var(--purple)}
-  .card.miles h2{color:var(--gold)}
-  .card p{color:var(--muted); font-size:13.5px; margin:10px 0 16px}
-  .feats{display:flex; flex-wrap:wrap; gap:6px}
-  .feats span{
-    font-size:11.5px; color:var(--muted);
-    border:1px solid var(--line); border-radius:999px; padding:3px 10px;
-  }
-  .go{
-    display:inline-block; margin-top:18px; font-weight:700; font-size:14px;
-    color:#1c150b; background:var(--gold); border-radius:999px; padding:8px 22px;
-  }
-  .card.mrt .go{background:var(--purple)}
-  .flow{
-    width:min(860px,100%); margin-top:26px; text-align:center;
-    color:var(--muted); font-size:12px; border:1px dashed var(--line);
-    border-radius:12px; padding:10px 14px;
-  }
-  .flow b{color:var(--gold)}
-  footer{margin-top:auto; padding-top:36px; color:var(--muted); font-size:11.5px; text-align:center}
-  footer a{color:var(--muted)}
-  /* ── 即時儀表板 ── */
-  .dash{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; width:min(860px,100%); margin-bottom:18px}
-  .dcard{
-    background:linear-gradient(180deg,var(--raised),var(--surface));
-    border:1px solid var(--line); border-radius:18px; padding:18px 20px;
-    box-shadow:0 18px 40px -18px rgba(0,0,0,.55);
-  }
-  .dcard h3{font:700 13px/1.4 "Noto Sans TC",sans-serif; letter-spacing:.14em; color:var(--muted); margin-bottom:10px}
-  .dcard h3 a{color:inherit; text-decoration:none}
-  .dcard h3 a:hover{color:var(--gold)}
-  .drow{display:flex; align-items:baseline; gap:10px; padding:5px 0; border-bottom:1px dashed var(--line); font-size:13.5px; flex-wrap:wrap}
-  .drow:last-of-type{border-bottom:0}
-  .drow .tm{font:700 16px "Chakra Petch",monospace; color:var(--gold); font-variant-numeric:tabular-nums; min-width:52px}
-  .drow .cd{color:var(--purple); font-weight:700; font-size:12px; min-width:64px}
-  .drow .ds{color:var(--muted); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
-  .drow .st{font-size:12px; color:var(--muted)}
-  .drow a{color:var(--gold); text-decoration:none; font-size:12px; white-space:nowrap}
-  .dnote{font-size:11px; color:var(--muted); margin-top:8px; opacity:.85}
-  .dchip{display:inline-block; font-size:11px; font-weight:700; border:1px solid var(--line-strong); border-radius:6px; padding:1px 7px; color:var(--muted)}
-  @media (prefers-color-scheme: light){
-    :root:not([data-theme="dark"]){
-      --bg:#f5f0e5; --surface:#fdfbf4; --raised:#ffffff;
-      --line:rgba(124,95,43,.18); --line-strong:rgba(124,95,43,.36);
-      --ink:#2b2416; --muted:#7b6d55; --gold:#9c7a36; --gold-deep:#c8a35f;
-      --purple:#7c4f9e; --purple-deep:#8e4e9e;
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12110d; --card:#1b1914; --ink:#ebe5d6; --muted:#9a917f;
+      --rule:rgba(235,229,214,.17); --rule-soft:rgba(235,229,214,.07); --seal:#f0674c;
+      --h0:rgba(235,229,214,.07); --h1:#243457; --h2:#375692; --h3:#5f86d6; --h4:#a8c5ff;
+      --glow:0 0 9px rgba(168,197,255,.55); --blob-a:rgba(95,134,214,.22); --blob-b:rgba(240,103,76,.14);
     }
-    :root:not([data-theme="dark"]) .go{color:#fffdf6}
-    :root:not([data-theme="dark"]) body{background:
-      radial-gradient(1100px 500px at 75% -10%, rgba(156,122,54,.08), transparent 60%),
-      radial-gradient(800px 400px at -5% 30%, rgba(142,78,158,.06), transparent 55%),
-      var(--bg)}
   }
-  :root[data-theme="light"]{
-    --bg:#f5f0e5; --surface:#fdfbf4; --raised:#ffffff;
-    --line:rgba(124,95,43,.18); --line-strong:rgba(124,95,43,.36);
-    --ink:#2b2416; --muted:#7b6d55; --gold:#9c7a36; --gold-deep:#c8a35f;
-    --purple:#7c4f9e; --purple-deep:#8e4e9e;
+  :root[data-theme="dark"]{
+    --paper:#12110d; --card:#1b1914; --ink:#ebe5d6; --muted:#9a917f;
+    --rule:rgba(235,229,214,.17); --rule-soft:rgba(235,229,214,.07); --seal:#f0674c;
+    --h0:rgba(235,229,214,.07); --h1:#243457; --h2:#375692; --h3:#5f86d6; --h4:#a8c5ff;
+    --glow:0 0 9px rgba(168,197,255,.55); --blob-a:rgba(95,134,214,.22); --blob-b:rgba(240,103,76,.14);
   }
-  :root[data-theme="light"] .go{color:#fffdf6}
-  :root[data-theme="light"] body{background:
-    radial-gradient(1100px 500px at 75% -10%, rgba(156,122,54,.08), transparent 60%),
-    radial-gradient(800px 400px at -5% 30%, rgba(142,78,158,.06), transparent 55%),
-    var(--bg)}
 
-  /* ═════════ 與姊妹站同家族的視覺處理 ═════════
-     本頁是純內容的落地頁，沒有浮在內容之上的導覽層——依 Apple
-     「Adopting Liquid Glass」的層次規則，這裡不套玻璃，只做共通的
-     環境光與控制項質感，維持家族一致。 */
-  body::after{
-    content:""; position:fixed; inset:-25%; z-index:-1; pointer-events:none;
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    /* 方格紙：跟熱力圖的格子是同一個母題 */
     background:
-      radial-gradient(38% 30% at 22% 26%, rgba(212,175,110,.26), transparent 70%),
-      radial-gradient(34% 28% at 78% 22%, rgba(142,78,158,.20), transparent 70%),
-      radial-gradient(42% 34% at 62% 82%, rgba(60,110,158,.18), transparent 70%);
-    filter:blur(28px); animation:aurora 34s ease-in-out infinite alternate;
+      linear-gradient(var(--rule-soft) 1px, transparent 1px) 0 0/100% 24px,
+      linear-gradient(90deg, var(--rule-soft) 1px, transparent 1px) 0 0/24px 100%,
+      var(--paper);
+    color:var(--ink); font:400 15px/1.7 var(--sans);
+    min-height:100dvh; overflow-x:hidden;
   }
-  @keyframes aurora{
-    0%{transform:translate3d(0,0,0) scale(1)}
-    50%{transform:translate3d(2.5%,-2%,0) scale(1.08)}
-    100%{transform:translate3d(-2%,2.5%,0) scale(1.04)}
+  /* 紙面上暈開的兩團墨：靛藍與朱紅，緩慢漂移 */
+  body::before{
+    content:""; position:fixed; inset:-20%; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(34% 30% at 78% 18%, var(--blob-a), transparent 70%),
+      radial-gradient(30% 28% at 12% 8%, var(--blob-b), transparent 70%),
+      radial-gradient(36% 30% at 60% 92%, var(--blob-a), transparent 72%);
+    filter:blur(30px); animation:drift 36s ease-in-out infinite alternate;
   }
-  .card, .dcard{border-radius:22px}
-  .go, .feats span{box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
-  .card, .go{transition:transform .32s cubic-bezier(.2,1.5,.4,1), border-color .2s, box-shadow .2s}
-  .card:active{transform:scale(.985)}
-  @media (prefers-reduced-transparency: reduce){ body::after{display:none} }
-  @media (prefers-reduced-motion: reduce){ body::after{animation:none} }
+  @keyframes drift{to{transform:translate3d(-3%,2.5%,0) scale(1.08)}}
+  a{color:inherit}
+  .wrap{width:min(1160px,100%); margin:0 auto; padding:0 24px}
+
+  /* ── 跑馬燈 ── */
+  .ticker{background:var(--ink); color:var(--paper); display:flex; align-items:stretch; font:400 12.5px/1 var(--mono); overflow:hidden; position:relative}
+  .ticker .live{flex:none; display:flex; align-items:center; gap:8px; padding:0 14px 0 20px; background:var(--seal); color:#fff; font-weight:500; letter-spacing:.16em; z-index:1}
+  .ticker .live::before{content:""; width:7px; height:7px; border-radius:50%; background:#fff; animation:blink 1.4s steps(2,jump-none) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .ticker .rail{display:flex; flex:none; animation:slide var(--dur,60s) linear infinite; padding:11px 0}
+  .ticker:hover .rail{animation-play-state:paused}
+  @keyframes slide{to{transform:translateX(-50%)}}
+  .ticker .rail span{white-space:nowrap; padding:0 18px; display:inline-flex; gap:8px; align-items:baseline; font-family:var(--sans)}
+  .ticker .rail span::after{content:"✦"; margin-left:26px; opacity:.4}
+  .ticker b{font:500 12.5px var(--mono); opacity:.6}
+  .ticker em{font:500 12.5px var(--mono); font-style:normal; color:color-mix(in srgb,var(--seal) 70%,var(--paper))}
+  .ticker u{text-decoration:none; opacity:.62}
+
+  /* ── 刊頭 ── */
+  .mast{display:grid; grid-template-columns:1fr auto; column-gap:48px; align-items:end; padding:64px 0 28px}
+  .kicker{grid-column:1 / -1; font:500 12px/1 var(--mono); letter-spacing:.18em; color:var(--muted); text-transform:uppercase}
+  h1{grid-column:1 / -1; font:700 clamp(40px,9.4vw,112px)/1.02 var(--kai); letter-spacing:.01em; margin:18px 0 26px; position:relative; width:fit-content}
+  h1 .hl{
+    background:linear-gradient(color-mix(in srgb,var(--seal) 34%,transparent),color-mix(in srgb,var(--seal) 34%,transparent)) no-repeat 0 78%/0% 38%;
+    animation:marker .9s cubic-bezier(.6,0,.2,1) .45s forwards;
+  }
+  @keyframes marker{to{background-size:100% 38%}}
+  h1 .stamp{
+    position:absolute; right:-88px; top:-18px; width:70px; height:70px;
+    display:grid; grid-template-columns:1fr 1fr; place-items:center; padding:6px;
+    font:700 23px/1 var(--kai); color:var(--seal);
+    border:3px solid var(--seal); border-radius:8px; transform:rotate(7deg);
+    animation:slam .5s cubic-bezier(.2,1.7,.4,1) 1.1s both;
+  }
+  @keyframes slam{from{opacity:0; transform:rotate(-18deg) scale(2.8)}}
+  .lede{max-width:34em; color:var(--muted); font-size:16px}
+  .lede b{color:var(--ink); font-weight:500}
+
+  .ledger{display:grid; grid-template-columns:repeat(2,minmax(132px,auto)); border:1.5px solid var(--ink); background:var(--card); box-shadow:6px 6px 0 var(--ink)}
+  .ledger div{padding:14px 22px 12px; border-right:1px solid var(--rule); border-bottom:1px solid var(--rule)}
+  .ledger div:nth-child(2n){border-right:0}
+  .ledger div:nth-last-child(-n+2){border-bottom:0}
+  .ledger dt{font-size:12px; color:var(--muted); letter-spacing:.08em}
+  .ledger dd{font:500 34px/1.2 var(--mono); font-variant-numeric:tabular-nums}
+  .ledger dd small{font:400 12px var(--sans); color:var(--muted); margin-left:4px}
+  .ledger div:first-child dd{color:var(--seal)}
+
+  /* ── 區塊標題 ── */
+  .sec{padding:30px 0 10px}
+  .sec-h{display:flex; align-items:baseline; gap:14px; border-bottom:2px solid var(--ink); padding-bottom:8px; margin-bottom:20px}
+  .sec-h h2{font:700 26px/1.2 var(--kai)}
+  .sec-h .note{color:var(--muted); font-size:13px}
+  .sec-h .right{margin-left:auto; color:var(--muted); font-size:12px; display:flex; align-items:center; gap:14px; white-space:nowrap}
+  .seg{display:inline-flex; border:1px solid var(--ink); border-radius:999px; overflow:hidden}
+  .seg button{font:500 12px var(--sans); color:var(--ink); background:none; border:0; padding:2px 13px; cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--ink); color:var(--paper)}
+
+  /* ── 天際線（立體）與熱力圖（平面） ── */
+  #sky{display:block; width:100%; touch-action:pan-y}
+  #sky[hidden]{display:none}
+  .hm-scroll{overflow-x:auto; padding:4px 2px 8px; scrollbar-width:thin}
+  .hm{min-width:680px; display:grid; grid-template-columns:22px 1fr; gap:4px 6px}
+  .hm-months{grid-column:2; display:grid; grid-template-columns:repeat(var(--cols),1fr); gap:3px; font:400 11px/1 var(--mono); color:var(--muted); height:14px}
+  .hm-months span{white-space:nowrap}
+  .hm-wd{display:grid; grid-template-rows:repeat(7,1fr); gap:3px; font-size:10px; color:var(--muted); line-height:1}
+  .hm-wd span{display:flex; align-items:center}
+  .cells{display:grid; grid-auto-flow:column; grid-template-rows:repeat(7,1fr); grid-template-columns:repeat(var(--cols),1fr); gap:3px}
+  .cells i{aspect-ratio:1; border-radius:3px; background:var(--h0); display:block}
+  .cells i[data-l="1"]{background:var(--h1)} .cells i[data-l="2"]{background:var(--h2)}
+  .cells i[data-l="3"]{background:var(--h3)} .cells i[data-l="4"]{background:var(--h4); box-shadow:var(--glow)}
+  .cells i.void{visibility:hidden}
+  .cells i.today{outline:1.5px solid var(--seal); outline-offset:1px; animation:beat 2.2s ease-in-out infinite}
+  @keyframes beat{50%{outline-offset:3px}}
+  .cells i[data-d]:hover{outline:1.5px solid var(--ink); outline-offset:1px; animation:none}
+  .legend{display:inline-flex; align-items:center; gap:3px}
+  .legend i{width:11px; height:11px; border-radius:3px; display:block}
+
+  .tip{
+    position:fixed; z-index:10; pointer-events:none; opacity:0; transition:opacity .12s;
+    background:var(--ink); color:var(--paper); border-radius:6px; padding:8px 11px;
+    font-size:12px; line-height:1.55; max-width:260px; box-shadow:0 8px 24px -8px rgba(0,0,0,.45);
+  }
+  .tip.on{opacity:1}
+  .tip b{font:500 13px var(--mono)}
+  .tip ul{list-style:none; margin-top:4px; padding-top:4px; border-top:1px solid color-mix(in srgb,var(--paper) 25%,transparent)}
+  .tip li{display:flex; justify-content:space-between; gap:16px}
+  .tip li span:last-child{font-family:var(--mono)}
+
+  /* ── 進場：捲到才浮上來，印章跟著蓋下去 ── */
+  .anim .rv{opacity:0; transform:translateY(18px)}
+  .anim .rv.in{opacity:1; transform:none; transition:opacity .55s, transform .55s cubic-bezier(.2,.8,.2,1); transition-delay:calc(var(--i,0) * 60ms)}
+  .anim .rv .seal{opacity:0}
+  .anim .rv.in .seal{animation:press .42s cubic-bezier(.2,1.7,.4,1) both; animation-delay:calc(var(--i,0) * 60ms + .28s)}
+  @keyframes press{from{opacity:0; transform:rotate(-16deg) scale(2.3)} to{opacity:1; transform:rotate(-3deg)}}
+
+  /* ── 動態 + 專案 兩欄 ── */
+  .cols{display:grid; grid-template-columns:300px 1fr; gap:44px; align-items:start}
+  .feed{list-style:none}
+  .feed > li{padding:0 0 18px 18px; border-left:1px solid var(--rule); position:relative}
+  .feed > li::before{content:""; position:absolute; left:-4.5px; top:7px; width:8px; height:8px; background:var(--paper); border:1.5px solid var(--ink); border-radius:50%}
+  .feed > li:first-child::before{background:var(--seal); border-color:var(--seal); box-shadow:0 0 0 4px color-mix(in srgb,var(--seal) 22%,transparent)}
+  .feed .d{display:flex; align-items:baseline; gap:8px; font:500 13px var(--mono)}
+  .feed .d span{color:var(--muted); font:400 12px var(--sans)}
+  .feed ul{list-style:none; margin-top:4px}
+  .feed ul li{padding:5px 0}
+  .feed .p{display:flex; align-items:baseline; gap:8px; font-weight:500; font-size:14px}
+  .feed .p .n{margin-left:auto; color:var(--muted); font:400 12px var(--mono)}
+  .feed .m{color:var(--muted); font-size:12.5px; line-height:1.5; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical}
+
+  .seal{
+    display:inline-block; flex:none; font:700 11px/1 var(--kai); color:var(--seal);
+    border:1.5px solid var(--seal); border-radius:4px; padding:3px 5px 2px; letter-spacing:.08em;
+    transform:rotate(-3deg); white-space:nowrap;
+  }
+  /* 私有專案的 commit 內容：像被塗黑的文件 */
+  .redact{display:flex; flex-direction:column; gap:6px; padding:3px 0}
+  .redact i{display:block; height:9px; border-radius:2px; background:var(--ink); opacity:.78}
+  .feed .redact{gap:4px}
+  .feed .redact i{height:7px; opacity:.5}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px}
+  .card{
+    background:var(--card); border:1px solid var(--rule); border-top:4px solid var(--heat,var(--rule)); border-radius:4px; padding:16px 18px 14px;
+    display:flex; flex-direction:column; gap:12px; position:relative; overflow:hidden;
+    box-shadow:4px 4px 0 var(--rule-soft);
+  }
+  .anim .card.in{transition:opacity .55s, transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; transition-delay:calc(var(--i,0) * 60ms), 0s, 0s}
+  .card:hover, .anim .card.in:hover{transform:translate(-3px,-3px); box-shadow:8px 8px 0 var(--ink)}
+  /* 游標光暈 */
+  .card::before{
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .25s;
+    background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%), color-mix(in srgb,var(--h3) 20%,transparent), transparent 70%);
+  }
+  .card:hover::before{opacity:1}
+  .card header{display:flex; align-items:flex-start; gap:10px}
+  .card h3{font:700 22px/1.3 var(--kai); overflow-wrap:anywhere}
+  .card header .seal{margin:4px 0 0 auto}
+  .card .links{margin-left:auto; display:flex; gap:10px; font-size:12px; white-space:nowrap; padding-top:6px; position:relative}
+  .card .links a{color:var(--muted); text-decoration:none; border-bottom:1px solid var(--rule)}
+  .card .links a:hover{color:var(--seal); border-color:var(--seal)}
+  .card .sum{color:var(--muted); font-size:13.5px; line-height:1.65}
+  .card .cells{gap:2px} .card .cells i{border-radius:2px}
+  .nums{display:flex; gap:18px; font-size:12px; color:var(--muted)}
+  .nums b{font:500 16px var(--mono); color:var(--ink); margin-right:3px; font-variant-numeric:tabular-nums}
+  .nums .hot b{color:var(--seal)}
+  .log{border-top:1px dashed var(--rule); padding-top:10px; margin-top:auto}
+  .log h4{font:400 12px var(--sans); color:var(--muted); margin-bottom:6px; display:flex; gap:6px; align-items:baseline}
+  .log h4 time{color:var(--ink); font-weight:500}
+  .log ul{list-style:none}
+  .log li{display:grid; grid-template-columns:42px minmax(0,1fr); gap:8px; font-size:12.5px; line-height:1.55; padding:2px 0}
+  .log li time{font:400 11.5px/1.75 var(--mono); color:var(--muted)}
+  .log li span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .log .hush{font-size:11.5px; color:var(--muted); margin-top:6px}
+  .tags{display:flex; flex-wrap:wrap; gap:6px; font:400 11px var(--mono); color:var(--muted)}
+  .tags span{border:1px solid var(--rule); border-radius:999px; padding:1px 9px}
+
+  /* ── 較早的專案 ── */
+  .old{list-style:none; border-top:1px solid var(--rule)}
+  .old li{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(180px,1fr) 104px 80px; gap:20px; align-items:center; padding:12px 4px; border-bottom:1px solid var(--rule)}
+  .old li:hover{background:color-mix(in srgb,var(--card) 70%,transparent)}
+  .old .t{display:flex; align-items:baseline; gap:8px; font:700 16px var(--kai)}
+  .old .t a{text-decoration:none} .old .t a:hover{color:var(--seal)}
+  .old .s{color:var(--muted); font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .strip{display:grid; grid-template-columns:repeat(53,1fr); gap:1.5px}
+  .strip i{height:14px; border-radius:1.5px; background:var(--h0); display:block}
+  .strip i[data-l="1"]{background:var(--h1)} .strip i[data-l="2"]{background:var(--h2)}
+  .strip i[data-l="3"]{background:var(--h3)} .strip i[data-l="4"]{background:var(--h4)}
+  .old .c{text-align:right; font:500 14px var(--mono); white-space:nowrap} .old .c small{font:400 11px var(--sans); color:var(--muted)}
+  .old .w{text-align:right; font-size:12px; color:var(--muted)}
+
+  footer{margin-top:56px; border-top:2px solid var(--ink); padding:18px 0 48px; display:flex; flex-wrap:wrap; gap:8px 22px; font-size:12.5px; color:var(--muted)}
+  footer a:hover{color:var(--seal)}
+  footer .sp{margin-left:auto}
+  footer button{font:inherit; color:inherit; background:none; border:1px solid var(--rule); border-radius:999px; padding:1px 12px; cursor:pointer}
+  footer button:hover{color:var(--ink); border-color:var(--ink)}
+  .empty{color:var(--muted); padding:40px 0; text-align:center}
+
+  /* ── RWD：平板 ── */
+  @media (max-width:1100px){
+    h1 .stamp{right:-74px; width:58px; height:58px; font-size:19px; padding:5px}
+    .cols{grid-template-columns:260px 1fr; gap:32px}
+  }
+  @media (max-width:900px){
+    .mast{grid-template-columns:1fr; row-gap:26px; padding-top:52px}
+    h1{margin-bottom:0}
+    .ledger{grid-template-columns:repeat(4,1fr)}
+    .ledger div{border-bottom:0; padding:12px 14px 10px}
+    .ledger div:nth-child(2n){border-right:1px solid var(--rule)}
+    .ledger div:last-child{border-right:0}
+    .ledger dd{font-size:28px}
+    .cols{grid-template-columns:1fr; gap:10px}
+    /* 窄版把動態收成最近三天，專案卡片才不會被擠到太下面 */
+    .feed > li:nth-child(n+4){display:none}
+    .old li{grid-template-columns:minmax(0,1.4fr) minmax(140px,1fr) 100px}
+    .old .w{display:none}
+  }
+  /* ── RWD：手機 ── */
+  @media (max-width:640px){
+    .wrap{padding:0 16px}
+    .mast{padding-top:64px}
+    h1 .stamp{right:2px; top:-60px; width:48px; height:48px; font-size:15px; padding:4px; border-width:2.5px}
+    .lede{font-size:15px}
+    .ledger{grid-template-columns:1fr 1fr; box-shadow:4px 4px 0 var(--ink)}
+    .ledger div:nth-child(2n){border-right:0}
+    .ledger div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+    .ledger dd{font-size:26px}
+    .sec-h{flex-wrap:wrap; gap:4px 12px}
+    .sec-h h2{font-size:23px}
+    .sec-h .right{width:100%; margin-left:0; justify-content:space-between}
+    .grid{grid-template-columns:1fr}
+    .old li{grid-template-columns:minmax(0,1fr) auto; gap:6px 12px}
+    .old .strip{grid-column:1 / -1; order:3}
+    .ticker .live{padding:0 10px 0 14px}
+    footer .sp{margin-left:0}
+  }
+  @media (hover:none){
+    .card:hover, .anim .card.in:hover{transform:none; box-shadow:4px 4px 0 var(--rule-soft)}
+    .card:hover::before{opacity:0}
+  }
+  @media (prefers-reduced-motion: reduce){
+    body::before, .ticker .rail, .ticker .live::before, .cells i.today{animation:none}
+    h1 .hl{animation:none; background-size:100% 38%}
+    h1 .stamp{animation:none}
+    .ticker{overflow-x:auto}
+  }
 </style>
 </head>
 <body>
-  <h1>旅人工具箱</h1>
-  <p class="sub">TRAVELER'S TOOLKIT · 移動 × 票務</p>
+<div class="ticker" aria-label="最近的開發動態"><span class="live">LIVE</span><div class="rail" id="rail"></div></div>
+<div class="wrap">
+  <section class="mast">
+    <p class="kicker" id="status">Build log · 同步中</p>
+    <h1>Chung 的<span class="hl">開發手帳</span><span class="stamp" aria-hidden="true"><span>持</span><span>續</span><span>施</span><span>工</span></span></h1>
+    <p class="lede">做 iOS／macOS 原生 App、PWA，還有各種解決自己麻煩的小工具。這一頁是<b>自動更新的開發紀錄</b>：每個專案的 commit 熱力圖、最後更新時間，以及最近改了什麼。</p>
+    <dl class="ledger" id="ledger"></dl>
+  </section>
 
-  <div class="dash" id="dash" hidden>
-    <div class="dcard" id="d-mrt">
-      <h3><a href="https://chung223.github.io/tymetrofast/">🚇 下一班機捷 ↗</a></h3>
-      <div id="d-mrt-body"><p class="dnote">載入中…</p></div>
+  <section class="sec">
+    <div class="sec-h">
+      <h2>一年的痕跡</h2><span class="note" id="hm-note"></span>
+      <span class="right">
+        <span>少 <span class="legend"><i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i></span> 多</span>
+        <span class="seg" role="group" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true">立體</button><button type="button" id="v2d" aria-pressed="false">平面</button></span>
+      </span>
     </div>
-    <div class="dcard" id="d-fl">
-      <h3><a href="https://chung223.github.io/tymetrofast/#v=flight">✈ 航班動態 ↗</a></h3>
-      <div id="d-fl-body"><p class="dnote">載入中…</p></div>
-    </div>
-    <div class="dcard" id="d-hsr" hidden>
-      <h3><a href="https://chung223.github.io/tymetrofast/#v=hsr">🚄 桃園站下一班高鐵 ↗</a></h3>
-      <div id="d-hsr-body"><p class="dnote">載入中…</p></div>
-    </div>
+    <canvas id="sky" role="img"></canvas>
+    <div class="hm-scroll" id="hm-scroll" hidden><div class="hm" id="hm" role="img"></div></div>
+  </section>
+
+  <div class="cols">
+    <section class="sec">
+      <div class="sec-h"><h2>最近動態</h2></div>
+      <ol class="feed" id="feed"></ol>
+    </section>
+    <section class="sec">
+      <div class="sec-h"><h2>進行中的專案</h2><span class="note">30 天內有更新</span></div>
+      <div class="grid" id="active"></div>
+    </section>
   </div>
 
-  <div class="cards">
-    <a class="card mrt" href="https://chung223.github.io/tymetrofast/">
-      <span class="tag">GETTING THERE · 移動的事</span>
-      <h2>🚄 快轉</h2>
-      <p>高鐵 × 機捷 × 桃園機場：高鐵任意起訖與餘票、機捷直達車轉乘逐班計算、查航班看報到櫃台、接送機與出差行程規劃。</p>
-      <div class="feats">
-        <span>高鐵時刻・餘票</span><span>官方逐班時刻</span><span>報到櫃台</span><span>接送機</span>
-        <span>高鐵×機捷聯程</span><span>票價</span><span>離線 PWA</span><span>中英日韓</span>
-      </div>
-      <span class="go">出發 ▶</span>
-    </a>
-
-    <a class="card miles" href="https://chung223.github.io/as-jx/">
-      <span class="tag">PAYING SMART · 票務的事</span>
-      <h2>✈ 哩程玩家工具箱</h2>
-      <p>星宇 × 阿拉斯加中停計算、四段票排程與甜度掃描、哩程兌換比價、CPM 價值判定、即時雷達與班機追蹤。</p>
-      <div class="feats">
-        <span>中停計算機</span><span>四段票</span><span>兌換比價</span><span>CPM</span>
-        <span>機場看板</span><span>即時雷達</span><span>班機追蹤</span><span>匯率</span>
-      </div>
-      <span class="go">起飛 ▶</span>
-    </a>
-  </div>
-
-  <p class="flow">兩站共用資料流：<b>TDX 官方航班看板</b>每 30 分鐘更新、互為深連結——看板查到票一鍵排交通，交通頁查航班直看櫃台。</p>
+  <section class="sec" id="old-sec" hidden>
+    <div class="sec-h"><h2>較早的專案</h2><span class="note">每一格是一週</span></div>
+    <ul class="old" id="old"></ul>
+  </section>
 
   <footer>
-    非官方工具，僅供參考 · <a href="https://github.com/chung223" target="_blank" rel="noopener">GitHub @chung223</a>
+    <span id="foot-sync"></span>
+    <a href="https://github.com/chung223">GitHub @chung223</a>
+    <span class="sp"><button id="theme" type="button">切換深／淺色</button></span>
   </footer>
+</div>
+<div class="tip" id="tip" role="status"></div>
+<noscript><p class="empty">這一頁需要 JavaScript 才能載入開發紀錄。</p></noscript>
 
 <script>
-/* ── 即時儀表板：讀兩個子站的公開 JSON ＋ 同網域共用的收藏（localStorage）── */
-(function(){
-  const $id = (x) => document.getElementById(x);
-  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const J = (u) => fetch(u, {cache:'no-cache'}).then((r) => { if (!r.ok) throw 0; return r.json(); });
-  const nowTW = () => {
-    const s = new Date().toLocaleString('sv-SE', {timeZone:'Asia/Taipei'});
-    return { date: s.slice(0,10), min: +s.slice(11,13)*60 + +s.slice(14,16) };
-  };
-  const fmt = (m) => `${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.round(m)%60).padStart(2,'0')}`;
-  const LS = (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const DAY = 86400000, WD = '日一二三四五六';
+  const ACTIVE_DAYS = 30, MINI_WEEKS = 26, WEEKS = 53;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let data = null, offset = 480, view = null;
+  if (!calm && 'IntersectionObserver' in window) document.body.classList.add('anim');
 
-  async function mrtCard(){
-    const el = $id('d-mrt-body');
-    try {
-      const base = '/tymetrofast/data/';
-      const [network, timetable, holi] = await Promise.all([J(base+'network.json'), J(base+'timetable.json'), J(base+'holidays.json')]);
-      const fav = (LS('tymf-favs') || [])[0];
-      const [from, to] = (fav || 'A1|A13').split('|');
-      const now = nowTW();
-      const dow = new Date(now.date+'T12:00:00Z').getUTCDay();
-      const dayType = (holi.holidays||[]).includes(now.date) || dow===0 || dow===6 ? 'holiday' : 'weekday';
-      const idxOf = new Map(network.stations.map((s,i) => [s.id, i]));
-      const nameOf = new Map(network.stations.map((s) => [s.id, s.name]));
-      const dir = (idxOf.get(to) ?? 0) > (idxOf.get(from) ?? 0) ? 'S' : 'N';
-      const deps = [];
-      let last = -1;
-      for (const tr of (timetable.dayTypes[dayType] || [])) {
-        if (tr.dir !== dir) continue;
-        const stop = tr.stops.find((x) => x[0] === from);
-        if (!stop) continue;
-        last = Math.max(last, stop[1]);
-        if (stop[1] >= now.min) deps.push({ t: stop[1], type: tr.type });
+  // 所有日期都用資料指定的時區（台灣）算，跟訪客所在時區無關
+  const dayOf = (ms) => new Date(ms + offset * 60000).toISOString().slice(0, 10);
+  const dayMs = (d) => Date.parse(d + 'T00:00:00Z');
+  const addDays = (d, n) => new Date(dayMs(d) + n * DAY).toISOString().slice(0, 10);
+  const wdOf = (d) => new Date(dayMs(d)).getUTCDay();
+  const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
+
+  function rel(iso) {
+    const diff = Date.now() - Date.parse(iso), m = Math.floor(diff / 60000);
+    if (m < 1) return '剛剛';
+    if (m < 60) return `${m} 分鐘前`;
+    if (m < 60 * 24) return `${Math.floor(m / 60)} 小時前`;
+    const days = Math.round((dayMs(dayOf(Date.now())) - dayMs(dayOf(Date.parse(iso)))) / DAY);
+    if (days <= 1) return '昨天';
+    if (days < 30) return `${days} 天前`;
+    if (days < 365) return `${Math.floor(days / 30)} 個月前`;
+    return dayOf(Date.parse(iso)).replaceAll('-', '/');
+  }
+  const exact = (iso) => new Date(Date.parse(iso) + offset * 60000).toISOString().slice(0, 16).replace('T', ' ');
+
+  // 每張卡片用同一把尺，卡片之間才能互相比較
+  const fixedLevel = (n) => (n >= 10 ? 4 : n >= 6 ? 3 : n >= 3 ? 2 : n >= 1 ? 1 : 0);
+  function quantileLevel(values) {
+    const v = values.filter(Boolean).sort((a, b) => a - b);
+    const q = (p) => v[Math.min(v.length - 1, Math.floor(v.length * p))] ?? 1;
+    const [a, b, c] = [q(0.25), q(0.5), q(0.75)];
+    return (n) => (!n ? 0 : n <= a ? 1 : n <= b ? 2 : n <= c ? 3 : 4);
+  }
+
+  // weeks 週、週日起算、最後一欄是本週；未來的日子留空
+  function cells(days, weeks, level, today) {
+    const start = addDays(today, -wdOf(today) - (weeks - 1) * 7);
+    let html = '';
+    for (let i = 0; i < weeks * 7; i++) {
+      const d = addDays(start, i);
+      if (d > today) { html += '<i class="void"></i>'; continue; }
+      const n = days[d] || 0;
+      html += `<i data-d="${d}" data-n="${n}" data-l="${level(n)}"${d === today ? ' class="today"' : ''}></i>`;
+    }
+    return html;
+  }
+
+  function redact(seed, lines) {
+    let h = 0;
+    for (const ch of seed) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+    let html = '';
+    for (let i = 0; i < lines; i++) { h = (h * 1103515245 + 12345) >>> 0; html += `<i style="width:${38 + (h % 55)}%"></i>`; }
+    return `<div class="redact" aria-hidden="true">${html}</div>`;
+  }
+
+  function countUp(el, to) {
+    const t0 = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / 1100);
+      el.textContent = Math.round(to * (1 - (1 - p) ** 4)).toLocaleString();
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // ── 立體天際線：每一天是一棟樓，樓高是當天的 commit 數 ──
+  const sky = { towers: [], labels: [], hover: null, raf: 0, total: {}, level: () => 0, today: '', W: 0 };
+  function buildSky(animate) {
+    const cv = $('sky');
+    const W = cv.clientWidth;
+    if (!W) return;
+    const small = W < 640;
+    const weeks = small ? 26 : WEEKS;
+    const sx = small ? 3.2 : 5, sy = small ? 5.5 : 8;     // 每往前一排的位移
+    const maxH = small ? 96 : 150;
+    const pitch = (W - 6 * sx - 2) / weeks, bw = pitch * 0.8;
+    const ox = sx * 0.82, oy = sy * 0.82;                 // 樓的進深
+    const H = Math.ceil(maxH + 7 * sy + 28);
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + 'px';
+    const start = addDays(sky.today, -wdOf(sky.today) - (weeks - 1) * 7);
+    let peak = 1;
+    for (let i = 0; i < weeks * 7; i++) peak = Math.max(peak, sky.total[addDays(start, i)] || 0);
+    sky.towers = [];
+    sky.labels = [];
+    let prev = '';
+    for (let c = 0; c < weeks; c++) {
+      const m = addDays(start, c * 7).slice(0, 7);
+      if (m !== prev && c < weeks - 1) sky.labels.push({ x: 1 + c * pitch, text: `${+m.slice(5)}月` });
+      prev = m;
+    }
+    // 由後排（週日）畫到前排（週六），同一排由左到右，前面的才會蓋住後面的
+    for (let r = 0; r < 7; r++) for (let c = 0; c < weeks; c++) {
+      const d = addDays(start, c * 7 + r);
+      if (d > sky.today) continue;
+      const n = sky.total[d] || 0;
+      sky.towers.push({
+        d, n, c, l: sky.level(n),
+        x: 1 + c * pitch + (6 - r) * sx, y: maxH + (r + 1) * sy + 4,
+        h: n ? 7 + (maxH - 16) * Math.sqrt(n / peak) : 0,
+      });
+    }
+    Object.assign(sky, { W, H, dpr, bw, ox, oy, hover: null, labelY: maxH + 7 * sy + 22 });
+    cancelAnimationFrame(sky.raf);
+    if (!animate || calm) return drawSky(1e9);
+    const t0 = performance.now(), end = weeks * 14 + 800;
+    const loop = (t) => { drawSky(t - t0); if (t - t0 < end) sky.raf = requestAnimationFrame(loop); };
+    sky.raf = requestAnimationFrame(loop);
+  }
+  function drawSky(elapsed) {
+    if (!sky.W) return;
+    const ctx = $('sky').getContext('2d');
+    const css = getComputedStyle(document.documentElement);
+    const col = [0, 1, 2, 3, 4].map((i) => css.getPropertyValue(`--h${i}`).trim());
+    const ink = css.getPropertyValue('--ink').trim(), seal = css.getPropertyValue('--seal').trim();
+    const dark = css.getPropertyValue('--glow').trim() !== 'none';
+    const { bw, ox, oy } = sky;
+    ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
+    ctx.clearRect(0, 0, sky.W, sky.H);
+    const path = (pts) => {
+      ctx.beginPath();
+      pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.closePath();
+    };
+    const face = (pts, fill, shade) => {
+      path(pts);
+      ctx.fillStyle = fill; ctx.fill();
+      if (shade) { ctx.fillStyle = `rgba(0,0,0,${shade})`; ctx.fill(); }
+    };
+    for (const t of sky.towers) {
+      const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
+      const h = t.h * (1 - (1 - p) ** 3), { x, y } = t, top = y - h;
+      const lit = sky.hover === t;
+      const roof = [[x, top], [x + bw, top], [x + bw + ox, top - oy], [x + ox, top - oy]];
+      if (h > 0.5) {
+        face([[x + bw, y], [x + bw + ox, y - oy], [x + bw + ox, top - oy], [x + bw, top]], col[t.l], dark ? 0.5 : 0.34);
+        face([[x, top], [x + bw, top], [x + bw, y], [x, y]], col[t.l], dark ? 0.26 : 0.16);
       }
-      deps.sort((a,b) => a.t - b.t);
-      const link = `https://chung223.github.io/tymetrofast/#from=${from}&to=${to}&m=now`;
-      el.innerHTML =
-        `<div class="drow"><span class="ds"><b>${esc(from)} ${esc(nameOf.get(from)||'')}</b> → ${esc(to)} ${esc(nameOf.get(to)||'')}${fav ? '' : '（示範，收藏路線後顯示你的）'}</span></div>` +
-        (deps.slice(0,3).map((d) => `<div class="drow"><span class="tm">${fmt(d.t)}</span><span class="cd">${Math.round(d.t-now.min)} 分後</span><span class="dchip">${d.type==='express'?'直達':'普通'}</span></div>`).join('') || '<div class="drow"><span class="ds">今日已收班</span></div>') +
-        `<div class="drow"><span class="st">末班 <b>${last>=0?fmt(last):'—'}</b></span><a href="${link}">完整轉乘規劃 ▶</a></div>`;
-      $id('dash').hidden = false;
-    } catch { el.innerHTML = '<p class="dnote">暫時無法載入班表</p>'; }
-  }
-
-  async function flightCard(){
-    const el = $id('d-fl-body');
-    try {
-      const d = await J('/tymetrofast/data/fids.json').catch(() => J('/as-jx/tdx.json'));
-      const favs = LS('trav-fav-flights') || [];
-      const now = nowTW();
-      const fresh = (r) => { // 已過 20 分的不顯示（含跨午夜）
-        let df = (+r.st.slice(0,2))*60 + (+r.st.slice(3)) - now.min;
-        if (df < -720) df += 1440;
-        return df > -20;
-      };
-      const tpe = d.airports?.TPE || {};
-      const all = [...(tpe.dep||[]).map((r) => ({...r, k:'dep'})), ...(tpe.arr||[]).map((r) => ({...r, k:'arr'}))];
-      let rows = all.filter((r) => favs.includes(r.f) || (r.cs||[]).some((c) => favs.includes(c)));
-      const isFav = rows.length > 0;
-      if (!isFav) rows = (tpe.dep||[]).filter(fresh).map((r) => ({...r, k:'dep'}));
-      rows = rows.slice(0, 4);
-      el.innerHTML = (rows.map((r) => {
-        const eff = r.at || r.et;
-        const spot = r.k==='dep' ? [r.term?`T${r.term}`:'', r.ck?`櫃台${r.ck}`:'', r.gate?`門${r.gate}`:''].filter(Boolean).join('・') : (r.belt?`轉盤${r.belt}`:'');
-        return `<div class="drow"><span class="tm">${esc(r.st)}${eff && eff!==r.st ? `→${esc(eff)}` : ''}</span><span class="ds">${isFav?'⭐ ':''}${esc(r.f)} ${r.k==='dep'?'→':'←'} ${esc(r.o)}${spot?`・${esc(spot)}`:''}</span><a href="https://chung223.github.io/tymetrofast/#flight=${encodeURIComponent(r.f)}">🚇</a></div>`;
-      }).join('') || '<div class="drow"><span class="ds">此時段無航班</span></div>') +
-        `<p class="dnote">${isFav ? '⭐ 收藏航班（兩站互通）' : '接下來的桃機出發（在任一站 ☆ 收藏後優先顯示）'} · 看板 ${esc(d.updated_at||'')} 更新</p>`;
-      $id('dash').hidden = false;
-    } catch { el.innerHTML = '<p class="dnote">看板資料暫時無法載入</p>'; }
-  }
-
-  async function hsrCard(){
-    const el = $id('d-hsr-body');
-    try {
-      const base = '/tymetrofast/data/';
-      const [tt, live, sts] = await Promise.all([J(base+'thsr-timetable.json'), J(base+'thsr-live.json').catch(() => null), J(base+'thsr-stations.json').catch(() => null)]);
-      const now = nowTW();
-      const trains = tt.days?.[now.date];
-      if (!trains) throw 0;
-      const nameOf = (id) => sts?.stations?.find((s) => s.id === id)?.zh ?? id;
-      const seatTxt = (v) => !v ? '' : v === 'X' || /full/i.test(v) ? '售完' : v === 'L' || /limit/i.test(v) ? '有限' : '充足';
-      const rows = [];
-      for (const tr of trains) {
-        const i = tr.stops.findIndex(([sid]) => sid === '1020');
-        if (i < 0 || i === tr.stops.length - 1) continue;
-        const dep = tr.stops[i][1];
-        if (!dep || (+dep.slice(0,2))*60 + (+dep.slice(3,5)) < now.min) continue;
-        const dest = tr.stops[tr.stops.length - 1][0];
-        const ent = live?.seat?.['1020']?.[tr.no];
-        // 新格式為逐站陣列 → 取到終點站的狀態；舊格式為 [標準, 商務]
-        const seat = !ent ? null : Array.isArray(ent[0])
-          ? (ent.find((e) => e[0] === dest) ?? ent[ent.length - 1])?.[1]
-          : ent[0];
-        rows.push({ dep: dep.slice(0,5), no: tr.no, dest, seat });
+      if (dark && t.l === 4 && h > 0.5) { ctx.shadowColor = col[4]; ctx.shadowBlur = 12; }
+      face(roof, lit ? seal : col[t.l]);
+      ctx.shadowBlur = 0;
+      if (t.d === sky.today || lit) {
+        path(roof);
+        ctx.strokeStyle = lit ? ink : seal; ctx.lineWidth = 1.5; ctx.stroke();
       }
-      rows.sort((a,b) => a.dep.localeCompare(b.dep));
-      el.innerHTML = rows.slice(0,4).map((r) =>
-        `<div class="drow"><span class="tm">${esc(r.dep)}</span><span class="ds">${esc(r.no)} 次 往${esc(nameOf(r.dest))}</span><span class="st">${r.seat ? '標準 ' + seatTxt(r.seat) : ''}</span></div>`
-      ).join('') || '<div class="drow"><span class="ds">今日班次已結束</span></div>';
-      el.innerHTML += `<p class="dnote">餘票每 30 分鐘更新 · ${esc(live?.updated ?? '')}</p>`;
-      $id('d-hsr').hidden = false;
-    } catch { $id('d-hsr').hidden = true; }
+    }
+    ctx.fillStyle = css.getPropertyValue('--muted').trim();
+    ctx.font = '11px "DM Mono", monospace';
+    for (const l of sky.labels) ctx.fillText(l.text, l.x, sky.labelY);
   }
-  mrtCard(); flightCard(); hsrCard();
-  setInterval(mrtCard, 60000);
-  setInterval(flightCard, 5*60000);
-  setInterval(hsrCard, 5*60000);
+  function hitSky(e) {
+    const r = $('sky').getBoundingClientRect();
+    const px = e.clientX - r.left, py = e.clientY - r.top, { bw, ox, oy } = sky;
+    let hit = null;
+    for (let i = sky.towers.length - 1; i >= 0 && !hit; i--) {
+      const t = sky.towers[i], top = t.y - t.h;
+      if (px >= t.x && px <= t.x + bw + ox && py >= top - oy && py <= t.y) hit = t;
+    }
+    if (hit !== sky.hover) { sky.hover = hit; drawSky(1e9); }
+    if (hit) showTip(hit.d, hit.n, true, e.clientX, r.top + hit.y - hit.h - oy);
+    else tip.classList.remove('on');
+  }
+  $('sky').addEventListener('pointermove', hitSky);
+  $('sky').addEventListener('pointerdown', hitSky);
+  $('sky').addEventListener('pointerleave', () => { sky.hover = null; drawSky(1e9); tip.classList.remove('on'); });
+  new ResizeObserver(() => { if (data && view === '3d' && sky.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawSky(1e9));
+
+  function setView(v, animate) {
+    view = v;
+    $('sky').hidden = v !== '3d';
+    $('hm-scroll').hidden = v === '3d';
+    $('v3d').setAttribute('aria-pressed', v === '3d');
+    $('v2d').setAttribute('aria-pressed', v !== '3d');
+    if (v === '3d') buildSky(animate);
+    else { const sc = $('hm-scroll'); sc.scrollLeft = sc.scrollWidth; }
+  }
+  for (const v of ['3d', '2d']) $('v' + v).addEventListener('click', () => {
+    setView(v, true);
+    try { localStorage.setItem('home-view', v); } catch {}
+  });
+
+  let io = null;
+  function reveal() {
+    const els = document.querySelectorAll('.rv:not(.in)');
+    if (!document.body.classList.contains('anim')) return els.forEach((el) => el.classList.add('in'));
+    io ??= new IntersectionObserver((entries) => {
+      // 同一批進到畫面的依序錯開
+      entries.filter((e) => e.isIntersecting).forEach((e, i) => {
+        e.target.style.setProperty('--i', i);
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -6% 0px' });
+    els.forEach((el) => io.observe(el));
+  }
+
+  function render(first) {
+    offset = data.utcOffsetMinutes ?? 480;
+    const today = dayOf(Date.now());
+    const projects = data.projects;
+    const total = {};
+    for (const src of [...projects, data.other]) for (const [d, n] of Object.entries(src?.days || {})) total[d] = (total[d] || 0) + n;
+    const level = quantileLevel(Object.values(total));
+
+    // ── 刊頭數字 ──
+    const year = projects.reduce((s, p) => s + p.year, 0) + (data.other?.year || 0);
+    const activeDays = Object.keys(total).filter((d) => d >= addDays(today, -364)).length;
+    let streak = 0;
+    for (let d = total[today] ? today : addDays(today, -1); total[d]; d = addDays(d, -1)) streak++;
+    const cutoff = addDays(today, -ACTIVE_DAYS);
+    const active = projects.filter((p) => dayOf(Date.parse(p.last)) >= cutoff);
+    const older = projects.filter((p) => !active.includes(p));
+    $('ledger').innerHTML = [
+      ['近一年 commits', year],
+      ['有動工的日子', activeDays, '天'],
+      ['目前連續', streak, '天'],
+      ['進行中專案', active.length, '個'],
+    ].map(([k, v, u]) => `<div><dt>${k}</dt><dd><span data-to="${v}">${first && !calm ? 0 : v.toLocaleString()}</span>${u ? `<small>${u}</small>` : ''}</dd></div>`).join('');
+    if (first && !calm) $('ledger').querySelectorAll('[data-to]').forEach((el) => countUp(el, +el.dataset.to));
+
+    const latest = projects[0];
+    $('status').textContent = latest ? `Build log · 最後動工 ${rel(latest.last)}` : 'Build log';
+    $('foot-sync').textContent = `資料每 15 分鐘自動同步 · 上次更新 ${exact(data.generatedAt)}`;
+    const privCount = projects.filter((p) => p.private).length + (data.other?.count || 0);
+    $('hm-note').textContent = `所有專案加總${privCount ? ` · 含 ${privCount} 個非公開專案` : ''}`;
+
+    // ── 平面熱力圖 ──
+    const start = addDays(today, -wdOf(today) - (WEEKS - 1) * 7);
+    let months = '', prev = '';
+    for (let w = 0; w < WEEKS; w++) {
+      const m = addDays(start, w * 7).slice(0, 7);
+      if (m !== prev && w < WEEKS - 2) months += `<span style="grid-column:${w + 1}">${+m.slice(5)}月</span>`;
+      prev = m;
+    }
+    const label = `過去一年的 commit 熱力圖：共 ${year} 個 commit，${activeDays} 天有動工`;
+    const hm = $('hm');
+    hm.style.setProperty('--cols', WEEKS);
+    hm.setAttribute('aria-label', label);
+    $('sky').setAttribute('aria-label', label);
+    hm.innerHTML =
+      `<div class="hm-months">${months}</div>` +
+      `<div class="hm-wd"><span></span><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span></div>` +
+      `<div class="cells" data-scope="all">${cells(total, WEEKS, level, today)}</div>`;
+
+    // ── 最近動態 + 跑馬燈 ──
+    let feed = '';
+    const rail = [];
+    for (let i = 0, shown = 0; i < 21 && shown < 7; i++) {
+      const d = addDays(today, -i);
+      if (!total[d]) continue;
+      shown++;
+      const rows = projects.filter((p) => p.days[d]).sort((a, b) => b.days[d] - a.days[d]).map((p) => {
+        const msgs = (p.recent || []).filter((c) => dayOf(Date.parse(c.t)) === d);
+        const body = p.private ? redact(p.title + d, 1)
+          : msgs.length ? `<p class="m">${esc(msgs[0].m)}</p>` : '';
+        rail.push(`<span><b>${md(d)}</b>${esc(p.title)}<em>×${p.days[d]}</em>${!p.private && msgs.length ? `<u>${esc(msgs[0].m.slice(0, 48))}</u>` : ''}</span>`);
+        return `<li><div class="p"><span>${esc(p.title)}</span>${p.private ? '<span class="seal">非公開</span>' : ''}<span class="n">×${p.days[d]}</span></div>${body}</li>`;
+      });
+      const hidden = data.other?.days?.[d];
+      if (hidden) rows.push(`<li><div class="p"><span>其他非公開專案</span><span class="n">×${hidden}</span></div></li>`);
+      const name = i === 0 ? '今天' : i === 1 ? '昨天' : `週${WD[wdOf(d)]}`;
+      feed += `<li class="rv"><div class="d">${md(d)}<span>${name} · ${total[d]} 個 commit</span></div><ul>${rows.join('')}</ul></li>`;
+    }
+    $('feed').innerHTML = feed || '<li class="empty">最近沒有動靜</li>';
+    // 內容放兩份、位移一半，接起來才沒有縫；項目太少時多補幾輪把寬度撐滿
+    const loops = rail.length ? Math.max(1, Math.ceil(12 / rail.length)) : 0;
+    $('rail').innerHTML = rail.join('').repeat(loops * 2);
+    $('rail').style.setProperty('--dur', `${Math.max(30, rail.length * loops * 4)}s`);
+
+    // ── 進行中的專案 ──
+    const weekAgo = addDays(today, -6);
+    $('active').innerHTML = active.map((p) => {
+      const week = Object.entries(p.days).reduce((s, [d, n]) => s + (d >= weekAgo ? n : 0), 0);
+      const links = p.private ? '<span class="seal" title="私有專案：只公開簡介與 commit 數量">非公開</span>'
+        : `<span class="links">${p.site ? `<a href="${esc(p.site)}">網站 ↗</a>` : ''}<a href="${esc(p.repo)}">GitHub ↗</a></span>`;
+      const log = p.private
+        ? `${redact(p.title, 3)}<p class="hush">commit 內容不公開</p>`
+        : `<ul>${p.recent.slice(0, 3).map((c) => `<li><time>${md(dayOf(Date.parse(c.t)))}</time><span title="${esc(c.m)}">${esc(c.m)}</span></li>`).join('')}</ul>`;
+      const tags = [p.lang, ...(p.tags || [])].filter(Boolean);
+      const heat = fixedLevel(Math.ceil(week / 3));
+      return `<article class="card rv"${heat ? ` style="--heat:var(--h${heat})"` : ''}>
+        <header><h3>${esc(p.title)}</h3>${links}</header>
+        ${p.summary ? `<p class="sum">${esc(p.summary)}</p>` : ''}
+        <div class="cells" style="--cols:${MINI_WEEKS}" role="img" aria-label="${esc(p.title)} 近半年的 commit 熱力圖">${cells(p.days, MINI_WEEKS, fixedLevel, today)}</div>
+        <div class="nums"><span${week >= 10 ? ' class="hot"' : ''}><b>${week}</b>近 7 天</span><span><b>${p.year}</b>近一年</span><span><b>${p.total}</b>累計</span></div>
+        <div class="log"><h4>最後更新 <time data-rel="${esc(p.last)}" title="${exact(p.last)}">${rel(p.last)}</time></h4>${log}</div>
+        ${tags.length ? `<div class="tags">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}</div>` : ''}
+      </article>`;
+    }).join('') || '<p class="empty">最近 30 天沒有更新的專案</p>';
+
+    // ── 較早的專案：一格一週 ──
+    $('old-sec').hidden = !older.length;
+    $('old').innerHTML = older.map((p) => {
+      const weeks = Array(WEEKS).fill(0);
+      for (const [d, n] of Object.entries(p.days)) {
+        const w = Math.floor((dayMs(d) - dayMs(start)) / (7 * DAY));
+        if (w >= 0 && w < WEEKS) weeks[w] += n;
+      }
+      const name = p.private ? `${esc(p.title)}<span class="seal">非公開</span>` : `<a href="${esc(p.site || p.repo)}">${esc(p.title)} ↗</a>`;
+      return `<li class="rv">
+        <div><div class="t">${name}</div><div class="s">${esc(p.summary)}</div></div>
+        <div class="strip" aria-hidden="true">${weeks.map((n) => `<i data-l="${fixedLevel(Math.ceil(n / 2))}"></i>`).join('')}</div>
+        <div class="c">${p.total}<small> commits</small></div>
+        <div class="w"><time data-rel="${esc(p.last)}" title="${exact(p.last)}">${rel(p.last)}</time></div>
+      </li>`;
+    }).join('');
+
+    tipData = { projects };
+    Object.assign(sky, { total, level, today });
+    if (first) {
+      let saved = null;
+      try { saved = localStorage.getItem('home-view'); } catch {}
+      view = saved === '2d' ? '2d' : '3d';
+    }
+    setView(view, first);
+    reveal();
+  }
+
+  // ── 格子提示 ──
+  let tipData = null;
+  const tip = $('tip');
+  function showTip(d, n, breakdown, x, y) {
+    let html = `<b>${d.replaceAll('-', '/')}</b> 週${WD[wdOf(d)]} · ${n ? `${n} 個 commit` : '沒有動工'}`;
+    if (n && breakdown) {
+      const rows = tipData.projects.filter((p) => p.days[d]).sort((a, b) => b.days[d] - a.days[d]);
+      const top = rows.slice(0, 5).map((p) => `<li><span>${esc(p.title)}</span><span>${p.days[d]}</span></li>`);
+      const rest = n - rows.slice(0, 5).reduce((s, p) => s + p.days[d], 0);
+      if (rest > 0) top.push(`<li><span>其他</span><span>${rest}</span></li>`);
+      html += `<ul>${top.join('')}</ul>`;
+    }
+    tip.innerHTML = html;
+    tip.classList.add('on');
+    const r = tip.getBoundingClientRect();
+    tip.style.left = Math.max(8, Math.min(x - r.width / 2, innerWidth - r.width - 8)) + 'px';
+    tip.style.top = (y - r.height - 14 < 8 ? y + 18 : y - r.height - 14) + 'px';
+  }
+  function onPointer(e) {
+    if (e.target.id === 'sky') return;
+    const el = e.target.closest?.('i[data-d]');
+    if (el) showTip(el.dataset.d, +el.dataset.n, el.parentElement.dataset.scope === 'all', e.clientX, e.clientY);
+    else tip.classList.remove('on');
+    const card = e.target.closest?.('.card');
+    if (card) {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    }
+  }
+  document.addEventListener('pointermove', onPointer);
+  document.addEventListener('pointerdown', onPointer);
+  addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
+
+  $('theme').addEventListener('click', () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('home-theme', root.dataset.theme); } catch {}
+    drawSky(1e9);
+  });
+
+  async function load() {
+    try {
+      const res = await fetch(`data.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const next = await res.json();
+      if (data && next.hash === data.hash) return;
+      const first = !data;
+      data = next;
+      render(first);
+    } catch (err) {
+      if (!data) $('status').textContent = 'Build log · 資料載入失敗';
+      console.error(err);
+    }
+  }
+  load();
+  // 頁面開著的時候自己跟上：每 5 分鐘抓一次新資料，每分鐘更新「幾分鐘前」
+  setInterval(load, 5 * 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+  setInterval(() => {
+    document.querySelectorAll('time[data-rel]').forEach((t) => { t.textContent = rel(t.dataset.rel); });
+  }, 60000);
 })();
 </script>
 </body>
