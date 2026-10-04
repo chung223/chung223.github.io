@@ -13,7 +13,6 @@
 | `projects.json` | 專案的顯示名稱、簡介、標籤，以及哪些要隱藏 |
 | `scripts/build-data.mjs` | 用 GitHub API 抓各 repo 的 commit，產生 `data.json` |
 | `.github/workflows/pages.yml` | push 與排程時產生資料並部署；資料沒變就略過部署 |
-| `toolkit/` | 原本的「旅人工具箱」導覽頁 |
 
 `data.json` 不進版控，每次部署時重新產生。merge commit 和機器人的自動 commit 不計入。
 
