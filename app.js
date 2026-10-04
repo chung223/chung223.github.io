@@ -2,6 +2,7 @@
 
 import { addDays, dayMs, wdOf, fixedLevel, summarize } from './skyline.js';
 import { createCity } from './city.js';
+import { track } from './analytics.js';
 import { t, getLang, setLang, applyStatic, pTitle, pSummary, tag } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
@@ -382,16 +383,8 @@ async function load() {
     console.error(err);
   }
 }
-load().then(() => {
-  // 訪客統計：GoatCounter（不用 cookie、不追蹤個人）。projects.json 有設代號才會載入
-  const code = data?.goatcounter;
-  if (!code || demo.size || location.hostname !== `${data.owner}.github.io`) return;
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = 'https://gc.zgo.at/count.js';
-  s.dataset.goatcounter = `https://${code}.goatcounter.com/count`;
-  document.head.append(s);
-});
+// 用 ?demo= 預覽時不計入訪客統計
+load().then(() => track(data, demo.size > 0));
 // 頁面開著的時候自己跟上：每 5 分鐘抓一次新資料，每分鐘更新「幾分鐘前」
 setInterval(load, 5 * 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
