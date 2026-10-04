@@ -7,6 +7,11 @@
       "summary": "取代 Acrobat Pro 的 PDF 工作站，手寫是一等功能。iPhone、iPad、Mac 原生。",
       "tags": ["iOS", "iPadOS", "macOS"]
     },
+    "ticket-watch": {
+      "title": "Ticket Watch",
+      "summary": "售票網站的有票區監看 Chrome 擴充功能：只盯票與提醒，購買由使用者自己操作。",
+      "tags": ["Chrome 擴充"]
+    },
     "kaku": {
       "title": "Kaku",
       "summary": "iOS 拍照 App，以及配套的相機知識庫。",
@@ -95,6 +100,11 @@
     "chung223.github.io": {
       "title": "開發手帳首頁",
       "summary": "chung223.github.io 個人首頁：GitHub Actions 定時抓 commit 紀錄，產生熱力圖與更新動態。"
+    },
+    "AutoVerify-iOS": {
+      "title": "AutoVerify iOS",
+      "summary": "在本機辨識驗證碼的 iOS Safari 擴充：模型直接跑在瀏覽器裡，圖片不離開裝置。",
+      "tags": ["iOS", "Safari 擴充"]
     },
     "as-jx": {
       "title": "哩程玩家工具箱",
