@@ -1,4 +1,8 @@
 {
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "site": "node scripts/build-data.mjs _site/data.json && cp index.html year.html styles.css app.js skyline.js city.js i18n.js analytics.js _site/ && node scripts/prerender.mjs _site",
+    "test": "node scripts/smoke-test.mjs _site"
+  }
 }

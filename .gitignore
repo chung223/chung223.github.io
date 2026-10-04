@@ -5,3 +5,8 @@ projects-*.svg
 og.svg
 og.png
 feed.xml
+node_modules/
+package-lock.json
+sitemap.xml
+robots.txt
+llms.txt

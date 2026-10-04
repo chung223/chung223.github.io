@@ -4,6 +4,7 @@
   "autoListPrivate": true,
   "birthday": "02-23",
   "analytics": { "goatcounter": "chung223" },
+  "links": { "linkedin": "https://www.linkedin.com/in/weichung-lai-011841300/" },
   "projects": {
     "ppnote": {
       "title": "Folium",

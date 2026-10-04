@@ -41,4 +41,6 @@ fork 與封存的 repo 不會列出（要列就加 `"include": true`）。
   `.github/workflows/pages.yml` 的複製與 `sed` 步驟，否則線上會 404 或配到快取的舊版。
 - 介面上的文字一律放 `i18n.js`，中英文都要有；不要把字串直接寫在 `index.html`、`app.js`、`city.js`、`year.html` 裡。
 - 首頁拆成 `index.html`（標記）、`styles.css`、`app.js`。不要再把樣式或程式塞回 `index.html`。
+- 改完跑一次 `npm run site && npm test`（見 README 的「測試」）。新增會影響畫面的功能時，順手在 `scripts/smoke-test.mjs` 補一條檢查。
+- 新增要部署的檔案時，`.github/workflows/pages.yml` 的複製清單和 `package.json` 的 `site` 指令都要加。
 - 走 PR，不直接推 `main`。合併後看一次部署有沒有成功。
