@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    # 每 15 分鐘抓一次各 repo 的 commit 紀錄；資料沒變就不重新部署
+    - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +15,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -22,11 +25,39 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build data.json
+        env:
+          # 能讀私有 repo 的 fine-grained PAT（Contents + Metadata 唯讀）。
+          # 沒設定時只會列出公開 repo。
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/build-data.mjs _site/data.json
+
+      - name: Skip deploy when nothing changed
+        id: diff
+        if: github.event_name == 'schedule'
+        run: |
+          live=$(curl -fsS "https://${{ github.repository_owner }}.github.io/data.json" | jq -r '.hash // empty' || true)
+          next=$(jq -r .hash _site/data.json)
+          echo "live=$live next=$next"
+          if [ -n "$live" ] && [ "$live" = "$next" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Assemble site
+        if: steps.diff.outputs.skip != 'true'
+        run: cp -r index.html toolkit .nojekyll _site/
+
       - uses: actions/configure-pages@v5
+        if: steps.diff.outputs.skip != 'true'
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
+        if: steps.diff.outputs.skip != 'true'
         with:
-          path: .
+          path: _site
       - id: deployment
+        if: steps.diff.outputs.skip != 'true'
         uses: actions/deploy-pages@v4
