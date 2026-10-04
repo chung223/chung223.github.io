@@ -293,6 +293,7 @@
 
   footer{margin-top:56px; border-top:2px solid var(--ink); padding:18px 0 48px; display:flex; flex-wrap:wrap; gap:8px 22px; font-size:12.5px; color:var(--muted)}
   footer a:hover{color:var(--seal)}
+  footer .stale{color:var(--seal); font-weight:500}
   .empty{color:var(--muted); padding:40px 0; text-align:center}
 
   /* ── RWD：平板 ── */
@@ -570,7 +571,12 @@ import { createCity } from './city.js';
 
     const latest = projects[0];
     $('status').textContent = latest ? `Build log · 最後動工 ${rel(latest.last)}` : 'Build log';
-    $('foot-sync').textContent = `資料每 15 分鐘自動同步 · 上次更新 ${exact(data.generatedAt)}`;
+    // 排程至少每 6 小時會重新部署一次；超過 14 小時沒動靜，多半是 token 過期或排程被停用
+    const staleHours = Math.floor((Date.now() - Date.parse(data.generatedAt)) / 3600000);
+    $('foot-sync').textContent = staleHours >= 14
+      ? `⚠ 資料已經 ${staleHours} 小時沒有同步，可能中斷了 · 上次更新 ${exact(data.generatedAt)}`
+      : `資料每 15 分鐘自動同步 · 上次更新 ${exact(data.generatedAt)}`;
+    $('foot-sync').classList.toggle('stale', staleHours >= 14);
     const privCount = projects.filter((p) => p.private).length + (data.other?.count || 0);
     $('hm-note').textContent = `所有專案加總${privCount ? ` · 含 ${privCount} 個非公開專案` : ''}`;
 

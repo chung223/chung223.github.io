@@ -13,7 +13,7 @@
 //                 沒設就只產生公開 repo 的資料。
 //   GITHUB_TOKEN  沒有 STATS_TOKEN 時用來讀公開 repo（Actions 內建）。
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { addDays, wdOf, summarize, layout, toSVG, listSVG, ogSVG, PALETTES } from '../skyline.js';
@@ -33,6 +33,7 @@ const RECENT_COMMITS = 8;
 const LOG_PER_DAY = 3;
 const BOT = /github-actions|\[bot\]|dependabot|renovate/i;
 
+let tokenExpires = '';
 async function api(path, init = {}) {
   const res = await fetch(`https://api.github.com${path}`, {
     ...init,
@@ -44,6 +45,8 @@ async function api(path, init = {}) {
     },
   });
   if (!res.ok) throw new Error(`${init.method || 'GET'} ${path} → ${res.status} ${await res.text()}`);
+  // PAT 的到期時間會放在這個 header，留給 workflow 在快到期時提醒
+  tokenExpires ||= res.headers.get('github-authentication-token-expiration') || '';
   return res.json();
 }
 
@@ -185,6 +188,19 @@ for (const p of built.filter((p) => p?.aggregateOnly)) {
 const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, projects, other };
 // 生日（MM-DD，可不設）：當天首頁會飄氣球
 if (cfg.birthday) body.birthday = cfg.birthday;
+// ── 部署前的最後一關：私有專案不該帶的東西一樣都不能出現，有就直接失敗、不部署 ──
+const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'days', 'site']);
+const privateUrls = selected.filter(({ repo }) => repo.private).map(({ repo }) => repo.html_url);
+function assertNoLeak(text, where) {
+  const hit = privateUrls.find((u) => text.includes(u));
+  if (hit) throw new Error(`隱私檢查失敗：${where} 含有私有 repo 的網址`);
+}
+for (const p of projects.filter((p) => p.private)) {
+  const extra = Object.keys(p).filter((k) => !PRIVATE_KEYS.has(k));
+  if (extra.length) throw new Error(`隱私檢查失敗：私有專案「${p.title}」多了不該公開的欄位 ${extra.join(', ')}`);
+}
+assertNoLeak(JSON.stringify(body), 'data.json');
+
 // 內容雜湊不含產生時間，排程用它判斷資料有沒有變、要不要重新部署
 const hash = createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);
 
@@ -234,3 +250,7 @@ await writeFile(join(dirname(OUT), 'og.svg'), ogSVG(
     stats: `近一年 ${sum.year.toLocaleString('en-US')} 個 commit · ${sum.activeDays} 天有動工 · 連續 ${sum.streak} 天`,
   },
 ));
+
+if (process.env.GITHUB_OUTPUT && STATS_TOKEN) {
+  await appendFile(process.env.GITHUB_OUTPUT, `token_expires=${tokenExpires}\n`);
+}
