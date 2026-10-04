@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1c1a17">
 <meta name="description" content="Chung 的開發手帳：正在做的 App、PWA 與小工具，附自動更新的 commit 熱力圖與最近動態。">
 <title>Chung 的開發手帳</title>
@@ -34,15 +33,10 @@
     --sans:"Noto Sans TC",system-ui,sans-serif;
     --mono:"DM Mono",ui-monospace,Menlo,monospace;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --paper:#12110d; --card:#1b1914; --ink:#ebe5d6; --muted:#9a917f;
-      --rule:rgba(235,229,214,.17); --rule-soft:rgba(235,229,214,.07); --seal:#f0674c;
-      --h0:rgba(235,229,214,.07); --h1:#243457; --h2:#375692; --h3:#5f86d6; --h4:#a8c5ff;
-      --glow:0 0 9px rgba(168,197,255,.55); --blob-a:rgba(95,134,214,.22); --blob-b:rgba(240,103,76,.14);
-    }
-  }
-  :root[data-theme="dark"]{
+  /* 深色配色跟著 data-mode（照台北時間或手動切換），不看系統的深淺色設定，頁面才會跟城市一起變夜景 */
+  :root{color-scheme:light}
+  :root[data-mode="dark"]{
+    color-scheme:dark;
     --paper:#12110d; --card:#1b1914; --ink:#ebe5d6; --muted:#9a917f;
     --rule:rgba(235,229,214,.17); --rule-soft:rgba(235,229,214,.07); --seal:#f0674c;
     --h0:rgba(235,229,214,.07); --h1:#243457; --h2:#375692; --h3:#5f86d6; --h4:#a8c5ff;
