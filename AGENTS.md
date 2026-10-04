@@ -26,6 +26,8 @@
 4. 想要比 repo 名稱更好的顯示名稱或中文簡介，加
    `"<repo 名稱>": { "title": "…", "summary": "…", "tags": ["iOS"] }`。
 
+幫專案加設定時，順手補上 `summary_en`（名稱是中文的話再加 `title_en`），英文版才不會出現中文。
+
 fork 與封存的 repo 不會列出（要列就加 `"include": true`）。
 
 ## 改這個 repo 時
@@ -37,4 +39,5 @@ fork 與封存的 repo 不會列出（要列就加 `"include": true`）。
 - 改 CSS 之後，除了立體天際線，也要看一眼卡片上的小熱力圖和「平面」檢視（曾經在整理樣式時被誤刪過）。
 - 部署時 workflow 會替 `./skyline.js`、`./city.js` 的 import 加上版本參數。新增頁面或模組檔時要一起加進
   `.github/workflows/pages.yml` 的複製與 `sed` 步驟，否則線上會 404 或配到快取的舊版。
+- 介面上的文字一律放 `i18n.js`，中英文都要有；不要把字串直接寫在 `index.html`、`city.js`、`year.html` 裡。
 - 走 PR，不直接推 `main`。合併後看一次部署有沒有成功。

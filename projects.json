@@ -6,167 +6,227 @@
     "ppnote": {
       "title": "Folium",
       "summary": "取代 Acrobat Pro 的 PDF 工作站，手寫是一等功能。iPhone、iPad、Mac 原生。",
-      "tags": ["iOS", "iPadOS", "macOS"]
+      "tags": ["iOS", "iPadOS", "macOS"],
+      "summary_en": "A PDF workstation to replace Acrobat Pro, with handwriting as a first-class feature. Native on iPhone, iPad and Mac."
     },
     "ticket-watch": {
       "title": "Ticket Watch",
       "summary": "售票網站的有票區監看 Chrome 擴充功能：只盯票與提醒，購買由使用者自己操作。",
-      "tags": ["Chrome 擴充"]
+      "tags": ["Chrome 擴充"],
+      "summary_en": "A Chrome extension that watches ticketing sites for available seats. It only watches and alerts; buying is left to you."
     },
     "kaku": {
       "title": "Kaku",
       "summary": "iOS 拍照 App，以及配套的相機知識庫。",
-      "tags": ["iOS"]
+      "tags": ["iOS"],
+      "summary_en": "An iOS camera app, plus its companion camera knowledge base."
     },
     "pastee": {
       "title": "貼貼 Pastee",
       "summary": "原生 Swift 剪貼簿管理工具，Mac、iPhone、iPad 以 iCloud 即時同步，iOS 上另有貼貼鍵盤。",
-      "tags": ["iOS", "macOS"]
+      "tags": ["iOS", "macOS"],
+      "title_en": "Pastee",
+      "summary_en": "A native Swift clipboard manager for Mac, iPhone and iPad with live iCloud sync, plus a keyboard on iOS."
     },
     "Murmo": {
       "title": "Murmo",
       "summary": "完全在本機執行的 macOS 語音助手：語音輸入、即時口譯字幕、會議紀錄、筆記問答。",
-      "tags": ["macOS"]
+      "tags": ["macOS"],
+      "summary_en": "A fully on-device voice assistant for macOS: dictation, live translated captions, meeting notes and notes Q&A."
     },
     "layer": {
       "title": "層 · Ceng",
       "summary": "個人知識庫的原生版：macOS 桌面版、iPhone 版與分享選單擴充，SwiftUI。",
-      "tags": ["iOS", "macOS"]
+      "tags": ["iOS", "macOS"],
+      "title_en": "Ceng",
+      "summary_en": "The native client for my personal wiki: a macOS app, an iPhone app and a share extension, in SwiftUI."
     },
     "wiki-chung-men": {
       "title": "個人知識庫 Wiki",
       "summary": "自架的個人知識庫：條目、知識圖譜，並提供 API 給原生 App 與 AI 工具使用。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "title_en": "Personal Wiki",
+      "summary_en": "A self-hosted personal knowledge base: entries, a knowledge graph, and an API for native apps and AI tools."
     },
     "cyber-banxian": {
       "title": "賽博半仙 CyberBanxian",
       "summary": "八字、紫微、占星、人類圖、塔羅加上 AI 諮商的多功能命理 PWA。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "CyberBanxian",
+      "summary_en": "A fortune-telling PWA: BaZi, Zi Wei, astrology, Human Design, tarot and AI counselling."
     },
     "kaijiang": {
       "title": "開講",
       "summary": "一句話生出一份能上台講的簡報：AI 生成、現場互動、逐字稿與語音。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "title_en": "Kaijiang",
+      "summary_en": "One sentence in, a stage-ready slide deck out: AI generation, live audience interaction, transcripts and voice."
     },
     "want-money": {
       "title": "潮汛 Tide & Timing",
       "summary": "台股／ETF 選股建議與買賣時機訊號系統，自架後端，PWA 加推播。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "Tide & Timing",
+      "summary_en": "Stock and ETF picks with buy and sell timing signals for the Taiwan market. Self-hosted backend, PWA with push."
     },
     "thin-planet": {
       "title": "瘦瘦星球",
       "summary": "跟朋友一起減肥競賽的 PWA：打卡積分、隱私排行、AI 看圖算卡路里、推播。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "Thin Planet",
+      "summary_en": "A PWA for weight-loss challenges with friends: check-ins and points, private leaderboards, AI calorie estimates from photos."
     },
     "yunyun": {
       "title": "LINE 預約與教室租借系統",
       "summary": "給工作室用的 LINE 預約系統：會員與老師端 LIFF、後台、排程提醒。",
-      "tags": ["LINE", "Web"]
+      "tags": ["LINE", "Web"],
+      "title_en": "LINE Booking & Room Rental",
+      "summary_en": "A LINE-based booking system for a studio: member and teacher apps inside LINE, an admin console, scheduled reminders."
     },
     "forms-fourh-org-tw": {
       "title": "協會內部行政系統",
       "summary": "工作上維護的帳務、表單與差勤系統，含手機版 PWA。",
-      "tags": ["工作", "Web"]
+      "tags": ["工作", "Web"],
+      "title_en": "Internal Admin System",
+      "summary_en": "Accounting, forms and attendance for work, with a mobile PWA."
     },
     "fourh-enrollment": {
       "title": "營隊選課系統",
       "summary": "高中營隊的搶課與二階段選課系統，Vue 3 加 Firebase。",
-      "tags": ["工作", "Web"]
+      "tags": ["工作", "Web"],
+      "title_en": "Camp Course Enrollment",
+      "summary_en": "First-come and two-phase course selection for a high-school camp. Vue 3 and Firebase."
     },
     "summit-fourh-org-tw": {
       "title": "國際年會活動網站",
       "summary": "雙語單頁活動網站。",
-      "tags": ["工作", "Web"]
+      "tags": ["工作", "Web"],
+      "title_en": "International Summit Site",
+      "summary_en": "A bilingual single-page event site."
     },
     "razzia": {
       "title": "自架問答競賽平台",
       "summary": "以開源專案 Razzia 為底的客製版，活動現場用的即時問答。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "title_en": "Self-hosted Quiz Platform",
+      "summary_en": "A customized build of the open-source Razzia, for live quizzes at events."
     },
     "mingwen-expedition": {
       "title": "明文遠征",
       "summary": "溝通練習 PWA：每日打卡加遊戲化機制。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "Mingwen Expedition",
+      "summary_en": "A communication-practice PWA with daily check-ins and game mechanics."
     },
     "wish-jar": {
       "title": "心願存錢筒",
       "summary": "玻璃擬態風格的存錢目標小工具。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "title_en": "Wish Jar",
+      "summary_en": "A glassmorphism savings-goal tool."
     },
-
     "fly-enclave": { "aggregateOnly": true },
     "family-fourh-hostmatch": { "aggregateOnly": true },
     "md-iphone-shortcut": { "aggregateOnly": true },
-
     "chung223.github.io": {
       "title": "開發手帳首頁",
-      "summary": "chung223.github.io 個人首頁：GitHub Actions 定時抓 commit 紀錄，產生熱力圖與更新動態。"
+      "summary": "chung223.github.io 個人首頁：GitHub Actions 定時抓 commit 紀錄，產生熱力圖與更新動態。",
+      "title_en": "This Build Log",
+      "summary_en": "This site: GitHub Actions pulls commit history on a schedule and renders the heatmaps and activity."
     },
     "AutoVerify-iOS": {
       "title": "AutoVerify iOS",
       "summary": "在本機辨識驗證碼的 iOS Safari 擴充：模型直接跑在瀏覽器裡，圖片不離開裝置。",
-      "tags": ["iOS", "Safari 擴充"]
+      "tags": ["iOS", "Safari 擴充"],
+      "summary_en": "An iOS Safari extension that solves CAPTCHAs on-device: the model runs in the browser and images never leave the phone."
     },
     "as-jx": {
       "title": "哩程玩家工具箱",
       "summary": "哩程票與現金票攻略：中停哩程計算機、兌換表比較、四段票排程器、空中動態。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "title_en": "Miles Toolbox",
+      "summary_en": "Award-ticket and cash-fare tools: a stopover mileage calculator, award charts, a four-segment planner and live flight info."
     },
     "tymetrofast": {
       "title": "機捷快轉",
       "summary": "桃園機場捷運快速轉乘計算器：直達車加轉乘怎麼搭最快，含航班看板與高鐵餘票。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "Airport MRT Fast Transfer",
+      "summary_en": "Finds the fastest express-plus-transfer route on the Taoyuan Airport MRT, with flight boards and HSR seat availability."
     },
     "Appprize": {
       "title": "AppPrize",
       "summary": "跨區訂閱比價：貼上 App Store 連結，比較各國訂閱價並換算新台幣，找出最省的那一區。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "summary_en": "Compare App Store subscription prices across regions, converted to TWD, to find the cheapest storefront."
     },
     "share-money": {
       "title": "반반 BanBan 半半分帳",
       "summary": "你先付，我來算。給常常代墊的人用的分帳小工具，可掃發票、拍照辨識明細。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "BanBan",
+      "summary_en": "A bill splitter for people who always pay first. Scan receipts or photograph the bill."
     },
     "cat-dog": {
       "title": "謎陣 Grid Hunt",
       "summary": "100 關邏輯推理謎題加每日挑戰，主角可以換成貓咪、柴犬、珍奶或電鍋。",
-      "tags": ["遊戲"]
+      "tags": ["遊戲"],
+      "title_en": "Grid Hunt",
+      "summary_en": "100 logic puzzles plus a daily challenge. Swap the hero for a cat, a shiba, bubble tea or a rice cooker."
     },
     "ah": {
       "title": "唉。嘆氣計數器",
       "summary": "記下每一聲「唉」，看看自己什麼時候、為了什麼而嘆氣。資料只存在裝置裡。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "Sigh Counter",
+      "summary_en": "Log every sigh and see when and why you sigh. Data stays on your device."
     },
     "doze": {
       "title": "骰寶練習桌",
       "summary": "用假籌碼練骰寶，開骰之前就看見每一組注碼的長期期望值。",
-      "tags": ["PWA"]
+      "tags": ["PWA"],
+      "title_en": "Sic Bo Practice Table",
+      "summary_en": "Practice Sic Bo with play chips and see each bet's long-run expected value before the dice roll."
     },
     "Competition": {
       "title": "競賽名次計算工具",
       "summary": "給承辦人用的競賽成績計算：名次法、並列與決勝、獎項分配，可離線使用。",
-      "tags": ["Web"]
+      "tags": ["Web"],
+      "title_en": "Contest Ranking Calculator",
+      "summary_en": "Score contests by rank-sum: ties, tie-breaks and prize allocation. Works offline."
     },
     "g923": {
       "title": "g923-mac",
       "summary": "讓 Logitech G923 方向盤在 Apple Silicon Mac 上有力回饋，不用 kext、不用關 SIP。",
-      "tags": ["macOS"]
+      "tags": ["macOS"],
+      "summary_en": "Force feedback for the Logitech G923 wheel on Apple Silicon Macs. No kext, and SIP stays on."
     },
     "mindkiln": {
       "title": "女媧工坊 Nuwa Studio",
       "summary": "從一堆文件裡蒸餾出一個人的思維框架，可以對話、也可以預測他會怎麼想。",
-      "tags": ["AI"]
+      "tags": ["AI"],
+      "title_en": "Nuwa Studio",
+      "summary_en": "Distill a person's mental models from documents, then chat with them or predict how they would think."
     },
     "daily-lab": {
       "title": "Daily Lab",
       "summary": "每天凌晨 3 點由 AI 自動做出來的驚喜小專案。",
-      "tags": ["AI"]
+      "tags": ["AI"],
+      "summary_en": "A surprise mini-project built by AI every day at 3 AM."
     },
-
     "chung223": { "hide": true },
     "pastee-privacy": { "hide": true },
     "kaku-support": { "hide": true },
     "murmo-releases": { "hide": true },
-    "tw-card-cash-back": { "hide": true }
+    "tw-card-cash-back": { "hide": true },
+    "crufu-run-2026": {
+      "summary_en": "Interactive route page for the 7th CRUFU RUN in northern Taiwan."
+    },
+    "persona-forge": {
+      "summary_en": "A persona generator for OpenClaw: pick traits and get four config files."
+    },
+    "z-image-prompt-generator": {
+      "summary_en": "A Ghibli-style prompt generator for Z-Image Turbo."
+    }
   }
 }

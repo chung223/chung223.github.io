@@ -58,10 +58,11 @@ jobs:
       - name: Assemble site
         if: steps.diff.outputs.skip != 'true'
         run: |
-          cp index.html year.html skyline.js city.js .nojekyll _site/
+          cp index.html year.html skyline.js city.js i18n.js .nojekyll _site/
           # 瀏覽器會把 .js 快取十分鐘。import 加上版本參數，新版首頁才不會配到舊版模組
           sed -i -E "s#from '\./([a-z]+)\.js'#from './\1.js?v=${GITHUB_SHA::8}'#" _site/index.html _site/year.html _site/city.js
           for f in index.html year.html city.js; do grep -q "skyline.js?v=" "_site/$f"; done
+          grep -q "i18n.js?v=" _site/index.html
 
       - name: Render social preview image
         if: steps.diff.outputs.skip != 'true'
