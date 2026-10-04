@@ -7,6 +7,11 @@
       "summary": "取代 Acrobat Pro 的 PDF 工作站，手寫是一等功能。iPhone、iPad、Mac 原生。",
       "tags": ["iOS", "iPadOS", "macOS"]
     },
+    "kaku": {
+      "title": "Kaku",
+      "summary": "iOS 拍照 App，以及配套的相機知識庫。",
+      "tags": ["iOS"]
+    },
     "pastee": {
       "title": "貼貼 Pastee",
       "summary": "原生 Swift 剪貼簿管理工具，Mac、iPhone、iPad 以 iCloud 即時同步，iOS 上另有貼貼鍵盤。",

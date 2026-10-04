@@ -14,7 +14,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { addDays, wdOf, summarize, layout, toSVG, listSVG, PALETTES } from '../skyline.js';
+import { addDays, wdOf, summarize, layout, toSVG, listSVG, ogSVG, PALETTES } from '../skyline.js';
 
 const ROOT = new URL('../', import.meta.url);
 const cfg = JSON.parse(await readFile(new URL('projects.json', ROOT), 'utf8'));
@@ -27,6 +27,7 @@ const TOKEN = STATS_TOKEN || process.env.GITHUB_TOKEN || '';
 const MAX_COMMITS = 5000;
 const HEATMAP_DAYS = 53 * 7;
 const RECENT_COMMITS = 8;
+const LOG_PER_DAY = 3;
 const BOT = /github-actions|\[bot\]|dependabot|renovate/i;
 
 async function api(path, init = {}) {
@@ -126,12 +127,15 @@ const selected = repos.flatMap((repo) => {
 const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
   const commits = await history(repo.name);
   if (!commits.length) return null;
-  const days = {};
+  const days = {}, log = {};
   let year = 0;
   for (const c of commits) {
     if (Date.parse(c.committedDate) >= yearAgo) year++;
     const d = localDay(c.committedDate);
-    if (d >= firstDay) days[d] = (days[d] || 0) + 1;
+    if (d < firstDay) continue;
+    days[d] = (days[d] || 0) + 1;
+    // 每天留最新的幾筆訊息，點大樓時列出來（只有公開 repo 會輸出）
+    if ((log[d] ||= []).length < LOG_PER_DAY) log[d].push(c.messageHeadline.slice(0, 100));
   }
   const stats = { total: commits.length, year, last: commits[0].committedDate, days };
   if (entry.aggregateOnly) return { aggregateOnly: true, ...stats };
@@ -157,6 +161,7 @@ const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
     project.recent = commits
       .slice(0, RECENT_COMMITS)
       .map((c) => ({ t: c.committedDate, m: c.messageHeadline.slice(0, 140) }));
+    project.log = log;
   }
   return project;
 });
@@ -175,6 +180,8 @@ for (const p of built.filter((p) => p?.aggregateOnly)) {
 }
 
 const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, projects, other };
+// 生日（MM-DD，可不設）：當天首頁會飄氣球
+if (cfg.birthday) body.birthday = cfg.birthday;
 // 內容雜湊不含產生時間，排程用它判斷資料有沒有變、要不要重新部署
 const hash = createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);
 
@@ -213,3 +220,14 @@ for (const mode of ['light', 'dark']) {
   await writeFile(join(dirname(OUT), `projects-${mode}.svg`), list);
   console.log(`skyline-${mode}.svg ${(skyline.length / 1024).toFixed(0)}KB、projects-${mode}.svg ${(list.length / 1024).toFixed(0)}KB`);
 }
+
+// ── 社群分享預覽圖：og.svg，部署時再轉成 og.png ──
+await writeFile(join(dirname(OUT), 'og.svg'), ogSVG(
+  layout({ total: sum.total, level: sum.level, today, W: 1100, weeks: 53 }),
+  PALETTES.light,
+  {
+    title: 'Chung 的開發手帳',
+    sub: '正在做的 App、PWA 與小工具，自動更新的 commit 天際線',
+    stats: `近一年 ${sum.year.toLocaleString('en-US')} 個 commit · ${sum.activeDays} 天有動工 · 連續 ${sum.streak} 天`,
+  },
+));

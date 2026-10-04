@@ -10,14 +10,18 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Chung 的開發手帳">
 <meta property="og:description" content="正在做的 App、PWA 與小工具，附自動更新的 commit 熱力圖與最近動態。">
+<meta property="og:url" content="https://chung223.github.io/">
+<meta property="og:image" content="https://chung223.github.io/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' rx='5' fill='%23c23a22'/%3E%3Cg fill='%23f3eee3'%3E%3Crect x='8' y='8' width='6' height='6' rx='1'/%3E%3Crect x='18' y='8' width='6' height='6' rx='1' opacity='.55'/%3E%3Crect x='8' y='18' width='6' height='6' rx='1' opacity='.55'/%3E%3Crect x='18' y='18' width='6' height='6' rx='1'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <script>
-  // data-theme 是使用者手動選的；data-mode 是實際生效的（沒選就跟系統）
-  try{const t=localStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}
-  document.documentElement.dataset.mode=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  // data-theme 是這次造訪手動選的；data-mode 是實際生效的。沒選就照台北時間：傍晚六點半到清晨五點半是夜景
+  try{const t=sessionStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t;}catch{}
+  (()=>{const h=(Date.now()/3600000+8)%24;document.documentElement.dataset.mode=document.documentElement.dataset.theme||(h<5.5||h>=18.5?'dark':'light');})();
 </script>
 <style>
   :root{
@@ -134,6 +138,52 @@
   #sky[hidden]{display:none}
   /* 點工人會彈出放大鏡，工人在裡面揮手 */
   .sky-wrap{position:relative}
+  .sky-wrap[hidden]{display:none}
+  #fx{position:absolute; left:0; top:0; width:100%; pointer-events:none}
+  .air{position:absolute; inset:0; overflow:hidden; pointer-events:none}
+  /* 飛機拉橫幅飛過天空，晚上閃航行燈 */
+  .plane{position:absolute; top:5px; left:0; display:flex; align-items:center; white-space:nowrap; color:var(--ink); animation:fly 38s linear 3s infinite both}
+  .plane svg{width:34px; height:14px; flex:none}
+  .plane .rope{width:16px; height:1px; background:var(--muted); flex:none}
+  .banner{font:500 11.5px/1 var(--sans); color:var(--paper); background:var(--seal); padding:4px 9px 4px 7px; border-radius:2px; clip-path:polygon(0 0,100% 0,100% 100%,0 100%,5px 50%)}
+  .banner:empty, .banner:empty + .rope{display:none}
+  @keyframes fly{0%{transform:translateX(-100%); left:0} 72%,100%{transform:translateX(0); left:100%}}
+  .blink{fill:none}
+  [data-mode="dark"] .blink{fill:#ff5a4d; animation:blink 1.1s steps(2,jump-none) infinite}
+  [data-mode="dark"] .blink.b{fill:#5dff9a; animation-delay:.55s}
+  /* 街上的車，數量跟最近七天的 commit 數成正比 */
+  .road{position:absolute; pointer-events:none; clip-path:inset(-8px 0 -3px 0)}
+  .car{position:absolute; left:-16px; width:11px; height:4px; border-radius:2px 3px 1px 1px; background:var(--c); animation:drive var(--dur) linear var(--delay) infinite}
+  .car::before{content:""; position:absolute; left:2px; top:-3px; width:6px; height:3px; border-radius:2px 2px 0 0; background:color-mix(in srgb,var(--c) 62%,#fff)}
+  .car::after{content:""; position:absolute; left:1.5px; bottom:-1.5px; width:2.6px; height:2.6px; border-radius:50%; background:#1c1a17; box-shadow:5.6px 0 #1c1a17}
+  .car.rev{left:auto; right:-16px; animation-name:drive-back}
+  [data-mode="dark"] .car{box-shadow:6px 0 7px 1px rgba(255,226,140,.75)}
+  @keyframes drive{to{transform:translateX(calc(var(--w) + 32px))}}
+  @keyframes drive-back{from{transform:scaleX(-1)} to{transform:translateX(calc(-1 * var(--w) - 32px)) scaleX(-1)}}
+  /* 新 commit 進來時浮上去的 +N */
+  .plus{position:absolute; z-index:5; pointer-events:none; font:700 15px var(--mono); color:#fff; background:var(--seal); padding:3px 10px; border-radius:999px; white-space:nowrap; animation:rise-out 3.2s ease-out both}
+  .plus[hidden]{display:none}
+  @keyframes rise-out{0%{opacity:0; transform:translateY(10px) scale(.6)} 14%{opacity:1; transform:none} 75%{opacity:1} 100%{opacity:0; transform:translateY(-46px)}}
+  /* 季節彩蛋 */
+  .lanterns{position:absolute; left:3%; right:3%; top:-4px; display:flex; justify-content:space-between; border-top:1.5px solid var(--seal)}
+  .lanterns i{font-style:normal; font-size:19px; line-height:1.5; transform-origin:50% 0; animation:swing 2.6s ease-in-out infinite alternate; animation-delay:calc(var(--i) * -.37s)}
+  @keyframes swing{from{transform:rotate(-9deg)} to{transform:rotate(9deg)}}
+  .balloons i{position:absolute; bottom:-30px; left:calc(6% + var(--i) * 13.5%); font-style:normal; font-size:21px; animation:float-up 11s ease-in infinite; animation-delay:calc(var(--i) * -1.7s)}
+  @keyframes float-up{to{transform:translate(18px,-340px) rotate(8deg)}}
+  /* 點大樓：當天的 commit */
+  .day{position:fixed; z-index:12; width:min(320px,calc(100vw - 24px)); max-height:min(380px,70vh); overflow:auto; background:var(--card); color:var(--ink); border:1.5px solid var(--ink); border-radius:6px; box-shadow:6px 6px 0 var(--ink); padding:14px 16px 12px; animation:pop .28s cubic-bezier(.2,1.4,.4,1) both; transform-origin:50% 100%}
+  .day[hidden]{display:none}
+  .day h3{font:700 19px/1.3 var(--kai); padding-right:26px}
+  .day .t{color:var(--muted); font-size:12.5px; margin:2px 0 8px}
+  .day .x{position:absolute; right:8px; top:6px; width:28px; height:28px; border:0; background:none; color:var(--muted); font-size:20px; line-height:1; cursor:pointer}
+  .day .x:hover{color:var(--seal)}
+  .day ul{list-style:none; border-top:1px dashed var(--rule)}
+  .day li{padding:8px 0 6px; border-bottom:1px dashed var(--rule)}
+  .day li:last-child{border-bottom:0; padding-bottom:0}
+  .day .p{display:flex; align-items:baseline; gap:8px; font-weight:500; font-size:14px}
+  .day .p .n{margin-left:auto; color:var(--muted); font:400 12px var(--mono)}
+  .day .m{color:var(--muted); font-size:12.5px; line-height:1.5; margin-top:2px}
+  .day .redact{margin-top:4px} .day .redact i{height:7px; opacity:.5}
   .lens{position:absolute; z-index:6; pointer-events:none; animation:pop .4s cubic-bezier(.2,1.5,.4,1) both; transform-origin:100% 60%}
   .lens[hidden]{display:none}
   .lens canvas{display:block; width:100%; height:100%; border-radius:50%; border:3px solid var(--ink); box-shadow:0 0 0 5px var(--paper), 0 16px 36px -10px rgba(0,0,0,.55)}
@@ -157,6 +207,7 @@
   .tip ul{list-style:none; margin-top:4px; padding-top:4px; border-top:1px solid color-mix(in srgb,var(--paper) 25%,transparent)}
   .tip li{display:flex; justify-content:space-between; gap:16px}
   .tip li span:last-child{font-family:var(--mono)}
+  .tip .x{display:block; margin-top:4px; color:#ffd166}
 
   /* ── 進場：捲到才浮上來，印章跟著蓋下去 ── */
   .anim .rv{opacity:0; transform:translateY(18px)}
@@ -288,7 +339,9 @@
     .card:hover::before{opacity:0}
   }
   @media (prefers-reduced-motion: reduce){
-    body::before, .ticker .rail, .ticker .live::before, .cells i.today, .lens, .bubble{animation:none}
+    body::before, .ticker .rail, .ticker .live::before, .cells i.today, .lens, .bubble, .day, .lanterns i{animation:none}
+    .plane{animation:none; left:12%}
+    .car, .balloons, .plus{display:none}
     h1 .hl{animation:none; background-size:100% 38%}
     h1 .stamp{animation:none}
     .ticker{overflow-x:auto}
@@ -319,8 +372,17 @@
         <span class="seg" role="group" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true">立體</button><button type="button" id="v2d" aria-pressed="false">平面</button></span>
       </span>
     </div>
-    <div class="sky-wrap">
+    <div class="sky-wrap" id="sky-wrap">
       <canvas id="sky" role="img"></canvas>
+      <div class="air" aria-hidden="true">
+        <div id="deco"></div>
+        <div class="plane"><span class="banner" id="banner"></span><i class="rope"></i>
+          <svg viewBox="0 0 44 18"><path d="M3 9.5c0-2 3-3.4 8-3.4h17l-6.5-5.4h4.6l9 5.4c4.2.3 6.9 1.6 6.9 3.4s-2.9 3.2-7.6 3.4L26 17.5h-4.6l5.6-4.6H11c-5 0-8-1.4-8-3.4z" fill="currentColor"/><path d="M3.2 8.6 0 3.2h3.6l4 4.2z" fill="currentColor"/><circle class="blink" cx="1.6" cy="4" r="1.3"/><circle class="blink b" cx="24" cy="16.6" r="1.3"/></svg>
+        </div>
+      </div>
+      <div class="road" id="road" aria-hidden="true"></div>
+      <canvas id="fx" aria-hidden="true"></canvas>
+      <div class="plus" id="plus" hidden aria-hidden="true"></div>
       <div class="lens" id="lens" hidden><canvas id="lens-cv" aria-hidden="true"></canvas><p class="bubble" id="bubble" role="status"></p></div>
     </div>
     <div class="hm-scroll" id="hm-scroll" hidden><div class="hm" id="hm" role="img"></div></div>
@@ -348,10 +410,12 @@
   </footer>
 </div>
 <div class="tip" id="tip" role="status"></div>
+<div class="day" id="day" role="dialog" aria-label="這一天的 commit" hidden></div>
 <noscript><p class="empty">這一頁需要 JavaScript 才能載入開發紀錄。</p></noscript>
 
 <script type="module">
-import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, PALETTES } from './skyline.js';
+import { addDays, dayMs, wdOf, fixedLevel, summarize } from './skyline.js';
+import { createCity } from './city.js';
 
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -410,185 +474,63 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     requestAnimationFrame(step);
   }
 
-  // ── 立體天際線：有 commit 的日子是一棟樓，沒動工的日子是綠地（圖形定義在 skyline.js）──
-  const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1, tick: 0, growing: false, visible: true, crew: [], lens: null, wave: 0 };
+  // ── 立體城市（city.js）與白天／夜景 ──
+  // ?demo=night,snow,fireworks,newyear,birthday,lunch,dusk,overtime,off,commit 可以預覽平常看不到的狀態
   const root = document.documentElement;
-  const palette = () => PALETTES[root.dataset.mode === 'dark' ? 'dark' : 'light'];
-  function buildSky(animate) {
-    const cv = $('sky'), W = cv.clientWidth;
-    if (!W || !sky.sum) return;
-    sky.lay = layout({ total: sky.sum.total, level: sky.sum.level, today: sky.today, W });
-    sky.dpr = Math.min(devicePixelRatio || 1, 2);
-    sky.hover = null;
-    closeLens();
-    cv.width = W * sky.dpr; cv.height = sky.lay.g.H * sky.dpr; cv.style.height = sky.lay.g.H + 'px';
-    cancelAnimationFrame(sky.raf);
-    sky.growing = false;
-    if (!animate || calm) return drawSky(1e9);
-    const t0 = performance.now(), end = sky.lay.g.weeks * 14 + 800;
-    sky.growing = true;
-    const loop = (t) => {
-      drawSky(t - t0);
-      if (t - t0 < end) sky.raf = requestAnimationFrame(loop);
-      else sky.growing = false;
-    };
-    sky.raf = requestAnimationFrame(loop);
-  }
-  function paint(ctx, p) {
-    if (p.k === 'rects') {
-      ctx.fillStyle = p.fill;
-      for (const [x, y, w, h] of p.rects) ctx.fillRect(x, y, w, h);
-      return;
-    }
-    let path = null;
-    if (p.k === 'path') path = new Path2D(p.d);
-    else {
-      ctx.beginPath();
-      if (p.k === 'ellipse') ctx.ellipse(p.cx, p.cy, p.rx, p.ry, 0, 0, Math.PI * 2);
-      else {
-        p.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-        if (p.k === 'poly') ctx.closePath();
-      }
-    }
-    if (p.fill) {
-      if (p.glow) { ctx.shadowColor = p.glow; ctx.shadowBlur = 14; }
-      if (p.alpha) ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.fill;
-      path ? ctx.fill(path) : ctx.fill();
-      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
-    }
-    if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.lineWidth = p.w || 1.5; ctx.stroke(); }
-  }
-  function drawSky(elapsed) {
-    const lay = sky.lay;
-    if (!lay) return;
-    const ctx = $('sky').getContext('2d'), pal = palette(), pose = 'p' + (sky.tick % 2);
-    ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
-    ctx.clearRect(0, 0, lay.g.W, lay.g.H);
-    for (const shape of backdrop(lay, pal)) paint(ctx, shape);
-    paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
-    const crew = [];
-    for (const t of lay.towers) {
-      const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
-      const h = t.h * (1 - (1 - p) ** 3);
-      for (const shape of prims(t, h, lay.g, pal, { today: t.d === sky.today, lit: sky.hover === t, crew })) {
-        if (!shape.cls || shape.cls === pose) paint(ctx, shape);
-      }
-    }
-    sky.crew = crew;
-    ctx.fillStyle = pal.muted;
-    ctx.font = '11px "DM Mono", monospace';
-    for (const l of lay.labels) ctx.fillText(l.text, l.x, lay.g.labelY);
-  }
-  function hitSky(e) {
-    if (!sky.lay) return;
-    const r = $('sky').getBoundingClientRect();
-    const px = e.clientX - r.left, py = e.clientY - r.top, { bw, ox, oy } = sky.lay.g;
-    let hit = null;
-    for (let i = sky.lay.towers.length - 1; i >= 0 && !hit; i--) {
-      const t = sky.lay.towers[i], top = t.y - t.h;
-      if (!t.lot && px >= t.x && px <= t.x + bw + ox && py >= top - oy && py <= t.y) hit = t;
-    }
-    if (hit !== sky.hover) { sky.hover = hit; drawSky(1e9); }
-    if (hit) showTip(hit.d, hit.n, true, e.clientX, r.top + hit.y - hit.h - oy);
-    else tip.classList.remove('on');
-    // 太陽／月亮本身也是開關
-    const c = sky.lay.celestial;
-    sky.onOrb = !hit && Math.hypot(px - c.x, py - c.y) < c.r * 1.7;
-    sky.onWorker = sky.crew.find((w) => px >= w.x - 4 * w.s && px <= w.x + 7 * w.s && py >= w.y - 12 * w.s && py <= w.y + 2) || null;
-    $('sky').style.cursor = sky.onOrb || sky.onWorker ? 'pointer' : '';
-  }
-  $('sky').addEventListener('pointermove', hitSky);
-  $('sky').addEventListener('pointerdown', hitSky);
-  $('sky').addEventListener('click', () => {
-    if (sky.onWorker) openLens(sky.onWorker);
-    else if (sky.onOrb) toggleTheme();
-  });
-
-  // ── 放大鏡：把工人那一角放大重畫一次，工人改成揮手的姿勢 ──
-  function openLens(w) {
-    // 剛被同一下點擊關掉的就不要再打開，等於點第二下是收起來
-    if (sky.closed?.tool === w.tool && performance.now() - sky.closed.at < 400) return;
-    const lens = $('lens'), cv = $('lens-cv'), W = sky.lay.g.W;
-    const D = W < 640 ? 170 : 230;
-    sky.lens = { ...w, D, z: (D * 0.42) / (11 * w.s) };
-    cv.width = cv.height = D * sky.dpr;
-    lens.style.width = lens.style.height = D + 'px';
-    lens.style.left = Math.max(0, Math.min(W - D, w.x - D - 14)) + 'px';
-    lens.style.top = Math.min(sky.lay.g.H - D, w.y - 6 * w.s - D * 0.6) + 'px';
-    const n = sky.sum.total[sky.today] || 0;
-    $('bubble').textContent = w.tool === 'shovel' ? '嗨！明天的地基我先挖 👋'
-      : n ? `嗨！今天已經動工 ${n} 次了 👋` : '嗨！今天還沒開工喔 👋';
-    tip.classList.remove('on');
-    lens.hidden = true; void lens.offsetWidth; lens.hidden = false;   // 重播彈出動畫
-    sky.wave = 0;
-    drawLens();
-    clearInterval(sky.waving);
-    if (!calm) sky.waving = setInterval(() => { sky.wave++; drawLens(); }, 280);
-  }
-  function closeLens() {
-    if (!sky.lens) return;
-    sky.closed = { tool: sky.lens.tool, at: performance.now() };
-    sky.lens = null;
-    clearInterval(sky.waving);
-    $('lens').hidden = true;
-  }
-  function drawLens() {
-    const w = sky.lens, lay = sky.lay;
-    if (!w || !lay) return;
-    const ctx = $('lens-cv').getContext('2d'), pal = palette(), pose = 'p' + (sky.wave % 2);
-    ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
-    ctx.fillStyle = getComputedStyle(root).getPropertyValue('--paper');
-    ctx.fillRect(0, 0, w.D, w.D);
-    ctx.translate(w.D / 2, w.D * 0.6);
-    ctx.scale(w.z, w.z);
-    ctx.translate(-(w.x + 1.5 * w.s), -(w.y - 5 * w.s));
-    paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
-    for (const t of lay.towers) {
-      for (const shape of prims(t, t.h, lay.g, pal, { today: t.d === sky.today, wave: true })) {
-        if (!shape.cls || shape.cls === pose) paint(ctx, shape);
-      }
-    }
-  }
-  document.addEventListener('pointerdown', closeLens);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLens(); });
-  $('sky').addEventListener('pointerleave', () => { sky.hover = null; drawSky(1e9); tip.classList.remove('on'); });
-  // 工人施工：每 0.5 秒換一個姿勢。只在看得到天際線、大樓長完之後才重畫
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { sky.visible = e.isIntersecting; }).observe($('sky'));
-  if (!calm) setInterval(() => {
-    if (view !== '3d' || document.hidden || !sky.visible || sky.growing || sky.hover) return;
-    sky.tick++;
-    drawSky(1e9);
-  }, 500);
-  new ResizeObserver(() => { if (view === '3d' && sky.lay?.g.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
+  const demo = new Set((new URLSearchParams(location.search).get('demo') || '').split(',').filter(Boolean));
+  const taipeiHour = () => (demo.has('lunch') ? 12.5 : demo.has('dusk') ? 17.9 : demo.has('overtime') || demo.has('off') ? 23
+    : (((Date.now() / 3600000 + offset / 60) % 24) + 24) % 24);
+  if (['night', 'overtime', 'off', 'fireworks'].some((k) => demo.has(k))) root.dataset.theme = 'dark';
+  if (['day', 'lunch', 'dusk'].some((k) => demo.has(k))) root.dataset.theme = 'light';
+  const city = createCity({ demo, hour: taipeiHour, showTip, hideTip: () => tip.classList.remove('on'), toggleTheme, pickDay: openDay, rel });
   function setMode() {
-    root.dataset.mode = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    drawLens();
+    const h = taipeiHour();
+    root.dataset.mode = root.dataset.theme || (h < 5.5 || h >= 18.5 ? 'dark' : 'light');
     $('theme').setAttribute('aria-label', root.dataset.mode === 'dark' ? '現在是夜景，切換成白天' : '現在是白天，切換成夜景');
-    drawSky(1e9);
+    city.refresh();
   }
   function toggleTheme() {
     root.dataset.theme = root.dataset.mode === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('home-theme', root.dataset.theme); } catch {}
+    try { sessionStorage.setItem('home-theme', root.dataset.theme); } catch {}
     setMode();
   }
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setMode);
   $('theme').addEventListener('click', toggleTheme);
   setMode();
 
-  function setView(v, animate) {
+  // 點大樓：列出那天各專案的 commit（公開的顯示訊息，私有的照舊塗黑）
+  function openDay(t, x, y) {
+    const d = t.d, day = $('day');
+    const rows = data.projects.filter((p) => p.days[d]).sort((a, b) => b.days[d] - a.days[d]).map((p) => {
+      const body = p.private ? redact(p.title + d, 1) : (p.log?.[d] || []).map((m) => `<p class="m">${esc(m)}</p>`).join('');
+      return `<li><div class="p"><span>${esc(p.title)}</span>${p.private ? '<span class="seal">非公開</span>' : ''}<span class="n">×${p.days[d]}</span></div>${body}</li>`;
+    });
+    const hidden = data.other?.days?.[d];
+    if (hidden) rows.push(`<li><div class="p"><span>其他非公開專案</span><span class="n">×${hidden}</span></div></li>`);
+    const sub = t.n ? `${t.n} 個 commit${t.peak ? ' · 🏆 這一年最高的一棟' : ''}`
+      : `沒有動工，這裡是綠地 🌳${t.idle > 1 ? ` · 連續休息第 ${t.idle} 天` : ''}`;
+    day.innerHTML = `<button type="button" class="x" aria-label="關閉">×</button><h3>${d.replaceAll('-', '/')} 週${WD[wdOf(d)]}</h3><p class="t">${sub}</p>${rows.length ? `<ul>${rows.join('')}</ul>` : ''}`;
+    day.hidden = true; void day.offsetWidth; day.hidden = false;
+    // 用 offsetWidth／Height：彈出動畫正在縮放，getBoundingClientRect 量到的會是縮小後的尺寸
+    const w = day.offsetWidth, h = day.offsetHeight;
+    day.style.left = Math.max(12, Math.min(x - w / 2, innerWidth - w - 12)) + 'px';
+    day.style.top = (y - h - 16 < 12 ? Math.max(12, Math.min(y + 20, innerHeight - h - 12)) : y - h - 16) + 'px';
+  }
+  const closeDay = () => { $('day').hidden = true; };
+  document.addEventListener('pointerdown', (e) => { if (!e.target.closest?.('#day') || e.target.closest('.x')) closeDay(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDay(); });
+
+  function setView(v) {
     view = v;
-    $('sky').hidden = v !== '3d';
+    $('sky-wrap').hidden = v !== '3d';
     $('hm-scroll').hidden = v === '3d';
     $('park-key').hidden = v !== '3d';
-    if (v !== '3d') closeLens();
     $('v3d').setAttribute('aria-pressed', v === '3d');
     $('v2d').setAttribute('aria-pressed', v !== '3d');
-    if (v === '3d') buildSky(animate);
-    else { const sc = $('hm-scroll'); sc.scrollLeft = sc.scrollWidth; }
+    if (v !== '3d') { const sc = $('hm-scroll'); sc.scrollLeft = sc.scrollWidth; }
   }
   for (const v of ['3d', '2d']) $('v' + v).addEventListener('click', () => {
-    setView(v, true);
+    setView(v);
+    city.setActive(v === '3d', true);
     try { localStorage.setItem('home-view', v); } catch {}
   });
 
@@ -714,20 +656,20 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     }).join('');
 
     tipData = { projects };
-    Object.assign(sky, { sum, today });
     if (first) {
       let saved = null;
       try { saved = localStorage.getItem('home-view'); } catch {}
       view = saved === '2d' ? '2d' : '3d';
     }
-    setView(view, first);
+    setView(view);
+    city.update({ sum, today, data, first, active: view === '3d' });
     reveal();
   }
 
   // ── 格子提示 ──
   let tipData = null;
   const tip = $('tip');
-  function showTip(d, n, breakdown, x, y) {
+  function showTip(d, n, breakdown, x, y, extra) {
     let html = `<b>${d.replaceAll('-', '/')}</b> 週${WD[wdOf(d)]} · ${n ? `${n} 個 commit` : '沒有動工'}`;
     if (n && breakdown) {
       const rows = tipData.projects.filter((p) => p.days[d]).sort((a, b) => b.days[d] - a.days[d]);
@@ -736,6 +678,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
       if (rest > 0) top.push(`<li><span>其他</span><span>${rest}</span></li>`);
       html += `<ul>${top.join('')}</ul>`;
     }
+    if (extra) html += `<span class="x">${extra}</span>`;
     tip.innerHTML = html;
     tip.classList.add('on');
     const r = tip.getBoundingClientRect();
@@ -756,7 +699,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   }
   document.addEventListener('pointermove', onPointer);
   document.addEventListener('pointerdown', onPointer);
-  addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
+  addEventListener('scroll', () => { tip.classList.remove('on'); closeDay(); }, { passive: true });
 
   async function load() {
     try {
@@ -778,6 +721,9 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
   setInterval(() => {
     document.querySelectorAll('time[data-rel]').forEach((t) => { t.textContent = rel(t.dataset.rel); });
+    // 沒手動選的話，到了傍晚自動變夜景；太陽月亮、飛機橫幅也跟著時間走
+    setMode();
+    city.minute();
   }, 60000);
 })();
 </script>
