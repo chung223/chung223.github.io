@@ -12,10 +12,16 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write    # 同步失敗或 token 快到期時開 issue 通知
+  actions: write   # 保活：避免排程因 repo 久未更新被 GitHub 停用
 
 concurrency:
   group: pages
   cancel-in-progress: false
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   deploy:
@@ -24,12 +30,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Build data.json
+        id: build
         env:
           # 能讀私有 repo 的 fine-grained PAT（Contents + Metadata 唯讀）。
           # 沒設定時只會列出公開 repo。
@@ -41,10 +48,12 @@ jobs:
         id: diff
         if: github.event_name == 'schedule'
         run: |
-          live=$(curl -fsS "https://${{ github.repository_owner }}.github.io/data.json" | jq -r '.hash // empty' || true)
+          live=$(curl -fsS "https://${{ github.repository_owner }}.github.io/data.json" || echo '{}')
           next=$(jq -r .hash _site/data.json)
-          echo "live=$live next=$next"
-          if [ -n "$live" ] && [ "$live" = "$next" ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
+          age=$(( $(date +%s) - $(echo "$live" | jq -r '(.generatedAt // "1970-01-01T00:00:00Z") | sub("\\.[0-9]+Z$"; "Z") | fromdate') ))
+          echo "live=$(echo "$live" | jq -r '.hash // empty') next=$next age=${age}s"
+          # 資料沒變就略過；但至少每 6 小時部署一次，首頁才能分辨「沒有新 commit」和「同步壞了」
+          if [ "$(echo "$live" | jq -r '.hash // empty')" = "$next" ] && [ "$age" -lt 21600 ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; fi
 
       - name: Assemble site
         if: steps.diff.outputs.skip != 'true'
@@ -62,14 +71,54 @@ jobs:
           rsvg-convert -w 1200 _site/og.svg -o _site/og.png
           rm _site/og.svg
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
         if: steps.diff.outputs.skip != 'true'
         with:
           enablement: true
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         if: steps.diff.outputs.skip != 'true'
         with:
           path: _site
       - id: deployment
         if: steps.diff.outputs.skip != 'true'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+
+      # ── 以下是保險：讓「默默壞掉」變成「會收到通知」 ──
+
+      - name: Keep the schedule alive
+        # 公開 repo 60 天沒有新 commit，GitHub 會停用排程。每天重新啟用一次來避免
+        if: github.event_name == 'schedule'
+        run: |
+          if [ "$(date -u +%H)" = "19" ]; then gh api -X PUT "repos/$GH_REPO/actions/workflows/pages.yml/enable" && echo "已重新啟用排程"; fi
+
+      - name: Warn before the token expires
+        if: steps.build.outputs.token_expires != ''
+        run: |
+          expires="${{ steps.build.outputs.token_expires }}"
+          days=$(( ( $(date -d "$expires" +%s) - $(date +%s) ) / 86400 ))
+          echo "STATS_TOKEN 到期日：$expires（剩 $days 天）"
+          title="STATS_TOKEN 即將到期"
+          if [ "$days" -le 10 ] && [ -z "$(gh issue list --state open --search "in:title $title" --json number --jq '.[0].number')" ]; then
+            gh issue create --title "$title" --body "讀取私有 repo 用的 token 會在 **$expires** 到期（剩 $days 天）。到期後首頁只剩公開專案。
+
+          更新方式見 README 的「設定 token」：重新產生一組 fine-grained PAT，再執行 \`gh secret set STATS_TOKEN --repo $GH_REPO\`。更新後關掉這個 issue 即可。"
+          fi
+
+      - name: Close the failure issue once things work again
+        if: success()
+        run: |
+          for n in $(gh issue list --state open --search "in:title 首頁資料同步失敗" --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "已恢復：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          done
+
+      - name: Open an issue when the sync fails
+        if: failure()
+        run: |
+          title="首頁資料同步失敗"
+          if [ -z "$(gh issue list --state open --search "in:title $title" --json number --jq '.[0].number')" ]; then
+            gh issue create --title "$title" --body "排程執行失敗，首頁會停在舊資料。
+
+          失敗的執行：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          常見原因：\`STATS_TOKEN\` 過期或被撤銷、GitHub API 暫時異常、隱私檢查沒過。恢復正常後這個 issue 會自動關閉。"
+          fi
