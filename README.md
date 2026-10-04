@@ -9,7 +9,9 @@
 
 | 檔案 | 用途 |
 |---|---|
-| `index.html` | 首頁本體，載入 `data.json` 後在瀏覽器端畫出來 |
+| `index.html` | 首頁的骨架（標記） |
+| `styles.css` | 首頁的樣式 |
+| `app.js` | 首頁的主程式：載入 `data.json`，畫出數字、熱力圖、動態、卡片，並接上城市 |
 | `skyline.js` | 天際線的版面與圖形，首頁（canvas）和 README 用的 SVG 共用 |
 | `i18n.js` | 中英文字典與語言切換（首頁、年度回顧、城市共用） |
 | `year.html` | 年度回顧：過去 365 天的總數、最長連續、最高的一棟、前五名專案、作息 |
@@ -39,6 +41,17 @@
 commit 訊息與網址不會寫進 `data.json`。給其他 agent 的注意事項在 [AGENTS.md](AGENTS.md)。
 
 公開 repo 會自動列出（fork 與封存的除外），不想列的加 `{ "hide": true }`。
+
+## 訪客統計
+
+用 [GoatCounter](https://www.goatcounter.com/)（不用 cookie、不追蹤個人）。到那邊免費註冊、選一個代號，
+填進 `projects.json` 的 `"analytics": { "goatcounter": "你的代號" }` 就會開始統計；留空就不載入任何統計程式。
+只在正式網址上統計，本機預覽與 `?demo=` 不算。
+
+## 字型與效能
+
+內文用系統內建的中文字型，只有標題的楷體（LXGW WenKai TC）和數字的等寬字（DM Mono）從 Google Fonts 載，
+而且不擋首次顯示。城市整張重畫一次約 1–2 毫秒，每半秒一次，不需要另外快取。
 
 ## 英文版
 

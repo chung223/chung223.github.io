@@ -217,6 +217,8 @@ for (const p of built.filter((p) => p?.aggregateOnly)) {
 const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, projects, other, hours, weekdays };
 // 生日（MM-DD，可不設）：當天首頁會飄氣球
 if (cfg.birthday) body.birthday = cfg.birthday;
+// 訪客統計（GoatCounter 的代號，可不設）
+if (cfg.analytics?.goatcounter) body.goatcounter = cfg.analytics.goatcounter;
 // ── 部署前的最後一關：私有專案不該帶的東西一樣都不能出現，有就直接失敗、不部署 ──
 const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'first', 'days', 'site', 'icon', 'en']);
 const privateUrls = selected.filter(({ repo }) => repo.private).map(({ repo }) => repo.html_url);
