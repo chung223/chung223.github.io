@@ -2,6 +2,8 @@
   "owner": "chung223",
   "utcOffsetMinutes": 480,
   "autoListPrivate": true,
+  "birthday": "02-23",
+  "analytics": { "goatcounter": "" },
   "projects": {
     "ppnote": {
       "title": "Folium",

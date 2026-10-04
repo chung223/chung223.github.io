@@ -57,7 +57,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
       return;
     }
     if (p.k === 'text') {
-      ctx.font = `700 ${p.size}px "Noto Sans TC", sans-serif`;
+      ctx.font = `700 ${p.size}px -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
       ctx.textAlign = 'center';
       ctx.fillStyle = p.fill;
       ctx.fillText(p.text, p.x, p.y);
@@ -435,7 +435,7 @@ export function createCity({ demo, hour, showTip, hideTip, toggleTheme, pickDay,
   }
 
   // ?demo=debug：把內部狀態掛到 window 上，方便在 console 檢查
-  if (demo.has('debug')) window.__city = { S, weather, P, effects, fxKick, fxLoop, get raf() { return fxRaf; } };
+  if (demo.has('debug')) window.__city = { S, weather, P, effects, fxKick, fxLoop, draw, get raf() { return fxRaf; } };
 
   // 工人、吊鉤每 0.5 秒換一個姿勢。只在看得到天際線、大樓長完之後才重畫
   if ('IntersectionObserver' in window) {

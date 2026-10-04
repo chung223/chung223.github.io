@@ -9,7 +9,9 @@
 <meta property="og:image" content="https://chung223.github.io/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- 字型不擋首次顯示：先預載，載完再套用。內文用系統內建的中文字型，只有標題的楷體和數字的等寬字從網路載 -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@700&display=swap"></noscript>
 <script>
   // 跟首頁同一套：這次造訪手動選過就用選的，否則照台北時間
   try{const t=sessionStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.mode=t;}catch{}
@@ -19,7 +21,7 @@
   :root{
     --paper:#f3eee3; --card:#fbf8f1; --ink:#1c1a17; --muted:#736b5e; --rule:rgba(28,26,23,.16); --rule-soft:rgba(28,26,23,.08);
     --seal:#c23a22; --h0:rgba(28,26,23,.07); --h2:#8ba3cf; --h3:#4d6fb0; --h4:#1e3d7e;
-    --kai:"LXGW WenKai TC","Noto Serif TC",serif; --sans:"Noto Sans TC",system-ui,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace;
+    --kai:"LXGW WenKai TC","Noto Serif TC",serif; --sans:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace;
   }
   :root{color-scheme:light}
   :root[data-mode="dark"]{
