@@ -12,8 +12,9 @@
 //   GITHUB_TOKEN  沒有 STATS_TOKEN 時用來讀公開 repo（Actions 內建）。
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
+import { addDays, wdOf, summarize, layout, toSVG, listSVG, PALETTES } from '../skyline.js';
 
 const ROOT = new URL('../', import.meta.url);
 const cfg = JSON.parse(await readFile(new URL('projects.json', ROOT), 'utf8'));
@@ -174,11 +175,8 @@ for (const p of built.filter((p) => p?.aggregateOnly)) {
 }
 
 const body = { owner: OWNER, utcOffsetMinutes: TZ_OFFSET_MIN, firstDay, today, projects, other };
-// 內容雜湊不含產生時間與「今天」，排程用它判斷資料有沒有變、要不要重新部署
-const hash = createHash('sha256')
-  .update(JSON.stringify({ ...body, today: undefined, firstDay: undefined }))
-  .digest('hex')
-  .slice(0, 16);
+// 內容雜湊不含產生時間，排程用它判斷資料有沒有變、要不要重新部署
+const hash = createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);
 
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, JSON.stringify({ generatedAt: new Date(now).toISOString(), hash, ...body }));
@@ -187,3 +185,31 @@ console.log(
   `${OUT}: ${projects.length} 個專案（公開 ${projects.length - priv}、私有 ${priv}），` +
     `另有 ${other.count} 個只計入熱力圖，hash=${hash}`,
 );
+
+// ── GitHub 個人頁 README 用的圖：天際線 + 進行中的專案，淺色深色各一張 ──
+const sum = summarize(body, today);
+const stamp = new Date(now + TZ_OFFSET_MIN * 60_000).toISOString().slice(5, 16).replace('-', '/').replace('T', ' ');
+const strip = addDays(today, -wdOf(today) - 25 * 7);
+const rows = projects
+  .filter((p) => localDay(p.last) >= addDays(today, -30))
+  .slice(0, 10)
+  .map((p) => {
+    const weeks = Array(26).fill(0);
+    for (const [d, n] of Object.entries(p.days)) {
+      const w = Math.floor((Date.parse(d) - Date.parse(strip)) / (7 * 86_400_000));
+      if (w >= 0) weeks[w] += n;
+    }
+    const last = localDay(p.last);
+    return { title: p.title, private: p.private, weeks, year: p.year, last: `${+last.slice(5, 7)}/${+last.slice(8)}` };
+  });
+for (const mode of ['light', 'dark']) {
+  const lay = layout({ total: sum.total, level: sum.level, today, W: 860, weeks: 53 });
+  const skyline = toSVG(lay, PALETTES[mode], {
+    label: `過去一年的 commit 天際線：共 ${sum.year} 個 commit，${sum.activeDays} 天有動工`,
+    caption: `近一年 ${sum.year.toLocaleString('en-US')} 個 commit · ${sum.activeDays} 天有動工 · 目前連續 ${sum.streak} 天 · 更新於 ${stamp}`,
+  });
+  const list = listSVG(rows, PALETTES[mode], { caption: '私＝非公開專案，只顯示 commit 數量 · 每格一週，共 26 週' });
+  await writeFile(join(dirname(OUT), `skyline-${mode}.svg`), skyline);
+  await writeFile(join(dirname(OUT), `projects-${mode}.svg`), list);
+  console.log(`skyline-${mode}.svg ${(skyline.length / 1024).toFixed(0)}KB、projects-${mode}.svg ${(list.length / 1024).toFixed(0)}KB`);
+}
