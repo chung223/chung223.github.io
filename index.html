@@ -132,20 +132,15 @@
   /* ── 天際線（立體）與熱力圖（平面） ── */
   #sky{display:block; width:100%; touch-action:pan-y}
   #sky[hidden]{display:none}
-  .hm-scroll{overflow-x:auto; padding:4px 2px 8px; scrollbar-width:thin}
-  .hm{min-width:680px; display:grid; grid-template-columns:22px 1fr; gap:4px 6px}
-  .hm-months{grid-column:2; display:grid; grid-template-columns:repeat(var(--cols),1fr); gap:3px; font:400 11px/1 var(--mono); color:var(--muted); height:14px}
-  .hm-months span{white-space:nowrap}
-  .hm-wd{display:grid; grid-template-rows:repeat(7,1fr); gap:3px; font-size:10px; color:var(--muted); line-height:1}
-  .hm-wd span{display:flex; align-items:center}
-  .cells{display:grid; grid-auto-flow:column; grid-template-rows:repeat(7,1fr); grid-template-columns:repeat(var(--cols),1fr); gap:3px}
-  .cells i{aspect-ratio:1; border-radius:3px; background:var(--h0); display:block}
-  .cells i[data-l="1"]{background:var(--h1)} .cells i[data-l="2"]{background:var(--h2)}
-  .cells i[data-l="3"]{background:var(--h3)} .cells i[data-l="4"]{background:var(--h4); box-shadow:var(--glow)}
-  .cells i.void{visibility:hidden}
-  .cells i.today{outline:1.5px solid var(--seal); outline-offset:1px; animation:beat 2.2s ease-in-out infinite}
-  @keyframes beat{50%{outline-offset:3px}}
-  .cells i[data-d]:hover{outline:1.5px solid var(--ink); outline-offset:1px; animation:none}
+  /* 點工人會彈出放大鏡，工人在裡面揮手 */
+  .sky-wrap{position:relative}
+  .lens{position:absolute; z-index:6; pointer-events:none; animation:pop .4s cubic-bezier(.2,1.5,.4,1) both; transform-origin:100% 60%}
+  .lens[hidden]{display:none}
+  .lens canvas{display:block; width:100%; height:100%; border-radius:50%; border:3px solid var(--ink); box-shadow:0 0 0 5px var(--paper), 0 16px 36px -10px rgba(0,0,0,.55)}
+  .bubble{position:absolute; left:50%; bottom:calc(100% + 14px); transform:translateX(-50%); transform-origin:50% 130%; background:var(--ink); color:var(--paper); font:700 15px/1.4 var(--kai); padding:7px 14px; border-radius:14px; white-space:nowrap; animation:popb .4s cubic-bezier(.2,1.5,.4,1) .12s both}
+  .bubble::after{content:""; position:absolute; left:50%; top:100%; margin-left:-6px; border:6px solid transparent; border-top-color:var(--ink)}
+  @keyframes pop{from{opacity:0; transform:scale(.15)}}
+  @keyframes popb{from{opacity:0; transform:translateX(-50%) scale(.3)}}
   .park{display:inline-flex; align-items:center; gap:5px}
   .park[hidden]{display:none}
   .park i{width:11px; height:11px; border-radius:3px; background:#9bc486; display:block}
@@ -293,7 +288,7 @@
     .card:hover::before{opacity:0}
   }
   @media (prefers-reduced-motion: reduce){
-    body::before, .ticker .rail, .ticker .live::before, .cells i.today{animation:none}
+    body::before, .ticker .rail, .ticker .live::before, .cells i.today, .lens, .bubble{animation:none}
     h1 .hl{animation:none; background-size:100% 38%}
     h1 .stamp{animation:none}
     .ticker{overflow-x:auto}
@@ -324,7 +319,10 @@
         <span class="seg" role="group" aria-label="檢視方式"><button type="button" id="v3d" aria-pressed="true">立體</button><button type="button" id="v2d" aria-pressed="false">平面</button></span>
       </span>
     </div>
-    <canvas id="sky" role="img"></canvas>
+    <div class="sky-wrap">
+      <canvas id="sky" role="img"></canvas>
+      <div class="lens" id="lens" hidden><canvas id="lens-cv" aria-hidden="true"></canvas><p class="bubble" id="bubble" role="status"></p></div>
+    </div>
     <div class="hm-scroll" id="hm-scroll" hidden><div class="hm" id="hm" role="img"></div></div>
   </section>
 
@@ -413,7 +411,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   }
 
   // ── 立體天際線：有 commit 的日子是一棟樓，沒動工的日子是綠地（圖形定義在 skyline.js）──
-  const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1, tick: 0, growing: false, visible: true };
+  const sky = { lay: null, sum: null, today: '', hover: null, raf: 0, dpr: 1, tick: 0, growing: false, visible: true, crew: [], lens: null, wave: 0 };
   const root = document.documentElement;
   const palette = () => PALETTES[root.dataset.mode === 'dark' ? 'dark' : 'light'];
   function buildSky(animate) {
@@ -422,6 +420,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     sky.lay = layout({ total: sky.sum.total, level: sky.sum.level, today: sky.today, W });
     sky.dpr = Math.min(devicePixelRatio || 1, 2);
     sky.hover = null;
+    closeLens();
     cv.width = W * sky.dpr; cv.height = sky.lay.g.H * sky.dpr; cv.style.height = sky.lay.g.H + 'px';
     cancelAnimationFrame(sky.raf);
     sky.growing = false;
@@ -468,13 +467,15 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     ctx.clearRect(0, 0, lay.g.W, lay.g.H);
     for (const shape of backdrop(lay, pal)) paint(ctx, shape);
     paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
+    const crew = [];
     for (const t of lay.towers) {
       const p = Math.max(0, Math.min(1, (elapsed - t.c * 14) / 800));
       const h = t.h * (1 - (1 - p) ** 3);
-      for (const shape of prims(t, h, lay.g, pal, { today: t.d === sky.today, lit: sky.hover === t })) {
+      for (const shape of prims(t, h, lay.g, pal, { today: t.d === sky.today, lit: sky.hover === t, crew })) {
         if (!shape.cls || shape.cls === pose) paint(ctx, shape);
       }
     }
+    sky.crew = crew;
     ctx.fillStyle = pal.muted;
     ctx.font = '11px "DM Mono", monospace';
     for (const l of lay.labels) ctx.fillText(l.text, l.x, lay.g.labelY);
@@ -494,11 +495,63 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     // 太陽／月亮本身也是開關
     const c = sky.lay.celestial;
     sky.onOrb = !hit && Math.hypot(px - c.x, py - c.y) < c.r * 1.7;
-    $('sky').style.cursor = sky.onOrb ? 'pointer' : '';
+    sky.onWorker = sky.crew.find((w) => px >= w.x - 4 * w.s && px <= w.x + 7 * w.s && py >= w.y - 12 * w.s && py <= w.y + 2) || null;
+    $('sky').style.cursor = sky.onOrb || sky.onWorker ? 'pointer' : '';
   }
   $('sky').addEventListener('pointermove', hitSky);
   $('sky').addEventListener('pointerdown', hitSky);
-  $('sky').addEventListener('click', () => { if (sky.onOrb) toggleTheme(); });
+  $('sky').addEventListener('click', () => {
+    if (sky.onWorker) openLens(sky.onWorker);
+    else if (sky.onOrb) toggleTheme();
+  });
+
+  // ── 放大鏡：把工人那一角放大重畫一次，工人改成揮手的姿勢 ──
+  function openLens(w) {
+    // 剛被同一下點擊關掉的就不要再打開，等於點第二下是收起來
+    if (sky.closed?.tool === w.tool && performance.now() - sky.closed.at < 400) return;
+    const lens = $('lens'), cv = $('lens-cv'), W = sky.lay.g.W;
+    const D = W < 640 ? 170 : 230;
+    sky.lens = { ...w, D, z: (D * 0.42) / (11 * w.s) };
+    cv.width = cv.height = D * sky.dpr;
+    lens.style.width = lens.style.height = D + 'px';
+    lens.style.left = Math.max(0, Math.min(W - D, w.x - D - 14)) + 'px';
+    lens.style.top = Math.min(sky.lay.g.H - D, w.y - 6 * w.s - D * 0.6) + 'px';
+    const n = sky.sum.total[sky.today] || 0;
+    $('bubble').textContent = w.tool === 'shovel' ? '嗨！明天的地基我先挖 👋'
+      : n ? `嗨！今天已經動工 ${n} 次了 👋` : '嗨！今天還沒開工喔 👋';
+    tip.classList.remove('on');
+    lens.hidden = true; void lens.offsetWidth; lens.hidden = false;   // 重播彈出動畫
+    sky.wave = 0;
+    drawLens();
+    clearInterval(sky.waving);
+    if (!calm) sky.waving = setInterval(() => { sky.wave++; drawLens(); }, 280);
+  }
+  function closeLens() {
+    if (!sky.lens) return;
+    sky.closed = { tool: sky.lens.tool, at: performance.now() };
+    sky.lens = null;
+    clearInterval(sky.waving);
+    $('lens').hidden = true;
+  }
+  function drawLens() {
+    const w = sky.lens, lay = sky.lay;
+    if (!w || !lay) return;
+    const ctx = $('lens-cv').getContext('2d'), pal = palette(), pose = 'p' + (sky.wave % 2);
+    ctx.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
+    ctx.fillStyle = getComputedStyle(root).getPropertyValue('--paper');
+    ctx.fillRect(0, 0, w.D, w.D);
+    ctx.translate(w.D / 2, w.D * 0.6);
+    ctx.scale(w.z, w.z);
+    ctx.translate(-(w.x + 1.5 * w.s), -(w.y - 5 * w.s));
+    paint(ctx, { k: 'poly', pts: lay.ground, fill: pal.ground });
+    for (const t of lay.towers) {
+      for (const shape of prims(t, t.h, lay.g, pal, { today: t.d === sky.today, wave: true })) {
+        if (!shape.cls || shape.cls === pose) paint(ctx, shape);
+      }
+    }
+  }
+  document.addEventListener('pointerdown', closeLens);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLens(); });
   $('sky').addEventListener('pointerleave', () => { sky.hover = null; drawSky(1e9); tip.classList.remove('on'); });
   // 工人施工：每 0.5 秒換一個姿勢。只在看得到天際線、大樓長完之後才重畫
   if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { sky.visible = e.isIntersecting; }).observe($('sky'));
@@ -510,6 +563,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
   new ResizeObserver(() => { if (view === '3d' && sky.lay?.g.W !== $('sky').clientWidth) buildSky(false); }).observe($('sky'));
   function setMode() {
     root.dataset.mode = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    drawLens();
     $('theme').setAttribute('aria-label', root.dataset.mode === 'dark' ? '現在是夜景，切換成白天' : '現在是白天，切換成夜景');
     drawSky(1e9);
   }
@@ -527,6 +581,7 @@ import { addDays, dayMs, wdOf, fixedLevel, summarize, layout, prims, backdrop, P
     $('sky').hidden = v !== '3d';
     $('hm-scroll').hidden = v === '3d';
     $('park-key').hidden = v !== '3d';
+    if (v !== '3d') closeLens();
     $('v3d').setAttribute('aria-pressed', v === '3d');
     $('v2d').setAttribute('aria-pressed', v !== '3d');
     if (v === '3d') buildSky(animate);

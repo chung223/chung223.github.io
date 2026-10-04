@@ -170,7 +170,7 @@ export function prims(t, h, g, pal, flags = {}) {
   };
 
   // 小工人：腳站在 (wx, wy)。手和工具有兩個姿勢（cls p0／p1）輪流出現，看起來就在動
-  const ws = Math.max(0.62, Math.min(1.25, bw / 13));
+  const ws = Math.max(0.95, Math.min(1.85, bw / 9));
   const worker = (wx, wy, tool) => {
     const s = ws, L = (pts, stroke, w, cls) => out.push({ k: 'line', pts, stroke, w: w * s, cls });
     L([[wx - 1.1 * s, wy], [wx - 0.6 * s, wy - 3.2 * s]], pal.pants, 1.3);
@@ -178,9 +178,23 @@ export function prims(t, h, g, pal, flags = {}) {
     out.push({ k: 'rects', rects: [[wx - 1.7 * s, wy - 7.2 * s, 3.4 * s, 4.2 * s]], fill: CREW.vest });
     out.push({ k: 'rects', rects: [[wx - 1.7 * s, wy - 5.6 * s, 3.4 * s, 0.9 * s]], fill: CREW.stripe });
     out.push({ k: 'ellipse', cx: wx, cy: wy - 8.5 * s, rx: 1.5 * s, ry: 1.5 * s, fill: CREW.skin });
-    out.push({ k: 'ellipse', cx: wx, cy: wy - 9.3 * s, rx: 1.9 * s, ry: 1.25 * s, fill: CREW.hat });
-    L([[wx - 2.4 * s, wy - 8.8 * s], [wx + 2.4 * s, wy - 8.8 * s]], CREW.brim, 0.9);
+    // 打招呼時安全帽往上推一點，露出臉
+    const hat = flags.wave ? 9.8 : 9.3;
+    out.push({ k: 'ellipse', cx: wx, cy: wy - hat * s, rx: 1.9 * s, ry: 1.25 * s, fill: CREW.hat });
+    L([[wx - 2.4 * s, wy - (hat - 0.5) * s], [wx + 2.4 * s, wy - (hat - 0.5) * s]], CREW.brim, 0.9);
     const sh = [wx + 1.4 * s, wy - 6.5 * s];
+    flags.crew?.push({ x: wx, y: wy, s, tool });
+    if (flags.wave) {
+      // 放大鏡裡：放下工具，笑著揮手
+      for (const ex of [-0.6, 0.6]) out.push({ k: 'ellipse', cx: wx + ex * s, cy: wy - 8.5 * s, rx: 0.22 * s, ry: 0.26 * s, fill: '#3a2a1a' });
+      L([[wx - 0.6 * s, wy - 7.85 * s], [wx, wy - 7.55 * s], [wx + 0.6 * s, wy - 7.85 * s]], '#a3482f', 0.28);
+      L([[wx - 1.4 * s, wy - 6.5 * s], [wx - 2.5 * s, wy - 4 * s]], CREW.skin, 1.1);
+      for (const [cls, hx, hy] of [['p0', 3.3, 10.4], ['p1', 4.6, 9.4]]) {
+        L([sh, [wx + hx * s, wy - hy * s]], CREW.skin, 1.1, cls);
+        out.push({ k: 'ellipse', cx: wx + hx * s, cy: wy - hy * s, rx: 0.8 * s, ry: 0.8 * s, fill: CREW.skin, cls });
+      }
+      return;
+    }
     if (tool === 'hammer') {
       L([sh, [wx + 3.4 * s, wy - 8.8 * s]], CREW.skin, 1.1, 'p0');
       L([[wx + 3.4 * s, wy - 8.8 * s], [wx + 4.6 * s, wy - 10.6 * s]], CREW.wood, 0.9, 'p0');
@@ -205,9 +219,9 @@ export function prims(t, h, g, pal, flags = {}) {
     // 施工預定地：黃土地基。明天那一塊有工人在挖、前面擺圍欄，再往後是三角錐和土堆
     out.push({ k: 'poly', pts: roofOf(x, y, bw, ox, oy), fill: pal.dirt });
     cx = x + bw / 2 + ox / 2; cy = y - oy / 2;
-    const s = ws;
+    const s = Math.min(ws, 1.3);   // 圍欄、三角錐不跟著工人一起放大
     if (t.lot === 1) {
-      worker(cx - bw * 0.12, cy + oy * 0.1, 'shovel');
+      worker(cx - bw * 0.2, cy + oy * 0.1, 'shovel');
       const bx = x + bw * 0.06, bwid = bw * 0.88, by = y - 5.6 * s, bh = 2.8 * s;
       out.push({ k: 'line', pts: [[bx + 0.8, by], [bx + 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
       out.push({ k: 'line', pts: [[bx + bwid - 0.8, by], [bx + bwid - 0.8, y + 0.5]], stroke: CREW.steel, w: 1 });
@@ -269,7 +283,7 @@ export function prims(t, h, g, pal, flags = {}) {
     // 吊鉤一上一下
     out.push({ k: 'line', pts: [[cx + 10, top], [cx + 10, top + 5]], stroke: pal.seal, w: 0.8, cls: 'p0' });
     out.push({ k: 'line', pts: [[cx + 10, top], [cx + 10, top + 8]], stroke: pal.seal, w: 0.8, cls: 'p1' });
-    worker(cx - bw * 0.3, cy + oy * 0.14, 'hammer');
+    worker(cx - bw * 0.42, cy + oy * 0.2, 'hammer');
   }
   return out;
 }
