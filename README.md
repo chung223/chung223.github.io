@@ -21,15 +21,20 @@
 
 ## 私有專案
 
-私有 repo **預設完全不會出現**。要顯示必須在 `projects.json` 明確列出：
+私有 repo **會自動列出**（`projects.json` 的 `"autoListPrivate": true`）。沒有另外設定時，
+顯示名稱就是 repo 名稱、簡介就是 GitHub 上的 description，所以**這兩樣等於公開**。
 
 ```jsonc
-"repo-name": { "title": "顯示名稱", "summary": "一句話簡介", "tags": ["iOS"] }  // 顯示卡片
+"repo-name": { "title": "顯示名稱", "summary": "一句話簡介", "tags": ["iOS"] }  // 換成比較好的名稱與簡介
 "repo-name": { "aggregateOnly": true }                                          // 只計入總熱力圖，不列名
+"repo-name": { "hide": true }                                                   // 完全不出現
 ```
 
+不想公開的 repo 要**在建立之前**先加 `hide` 或 `aggregateOnly`（設定可以先寫，repo 還不存在也沒關係），
+否則最多 15 分鐘內它就會出現在首頁。把 `autoListPrivate` 改成 `false` 可以回到「沒列的一律不出現」。
+
 私有專案只會公開顯示名稱、簡介、語言、每日 commit 數和最後更新時間；
-commit 訊息、repo 名稱與網址都不會寫進 `data.json`。
+commit 訊息與網址不會寫進 `data.json`。給其他 agent 的注意事項在 [AGENTS.md](AGENTS.md)。
 
 公開 repo 會自動列出（fork 與封存的除外），不想列的加 `{ "hide": true }`。
 

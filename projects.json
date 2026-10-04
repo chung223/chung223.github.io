@@ -1,6 +1,7 @@
 {
   "owner": "chung223",
   "utcOffsetMinutes": 480,
+  "autoListPrivate": true,
   "projects": {
     "ppnote": {
       "title": "Folium",
