@@ -34,6 +34,7 @@ fork 與封存的 repo 不會列出（要列就加 `"include": true`）。
   `data.json` 與產生的圖檔不進版控。
 - `skyline.js` 同時被瀏覽器和 Node 載入（首頁 canvas、README 用的 SVG、分享預覽圖共用），不要在裡面用只有其中一邊有的 API。
 - 平常看不到的狀態用 `?demo=` 預覽，清單在 README 的「城市裡的彩蛋」。
-- 部署時 workflow 會替 `./skyline.js`、`./city.js` 的 import 加上版本參數。新增模組檔時要一起加進
+- 改 CSS 之後，除了立體天際線，也要看一眼卡片上的小熱力圖和「平面」檢視（曾經在整理樣式時被誤刪過）。
+- 部署時 workflow 會替 `./skyline.js`、`./city.js` 的 import 加上版本參數。新增頁面或模組檔時要一起加進
   `.github/workflows/pages.yml` 的複製與 `sed` 步驟，否則線上會 404 或配到快取的舊版。
 - 走 PR，不直接推 `main`。合併後看一次部署有沒有成功。

@@ -11,6 +11,7 @@
 |---|---|
 | `index.html` | 首頁本體，載入 `data.json` 後在瀏覽器端畫出來 |
 | `skyline.js` | 天際線的版面與圖形，首頁（canvas）和 README 用的 SVG 共用 |
+| `year.html` | 年度回顧：過去 365 天的總數、最長連續、最高的一棟、前五名專案、作息 |
 | `city.js` | 首頁城市裡會動、會互動的部分：依台北時間的天空與工人作息、飛機橫幅、車、放大鏡、特效與季節彩蛋 |
 | `projects.json` | 專案的顯示名稱、簡介、標籤，以及哪些要隱藏 |
 | `scripts/build-data.mjs` | 用 GitHub API 抓各 repo 的 commit，產生 `data.json` |
@@ -62,6 +63,9 @@ python3 -m http.server 4173
 - **新 commit**：頁面開著時抓到今天的 commit 變多，今天那棟樓會長高、工人歡呼、撒彩帶。
 - **里程碑**：一年中最高的那棟插旗；連續動工每滿 7 天的晚上放煙火；連續沒動工越久，綠地越茂密。
 - **互動**：點大樓看當天各專案的 commit；點工人打招呼（每次換一句）；街上的車數量跟最近七天的 commit 數成正比。
+- **天氣**：照台北的即時天氣（Open-Meteo）：下雨就下雨、工人撐傘；雷雨會閃電；颱風天工人停工。
+- **依專案上色**：commit 最多的六個專案各一個顏色，每棟樓塗上當天最主要那個專案的顏色。
+- **尖峰時段**：現在如果是一年裡最常動工的三個鐘頭之一，街上的車加倍、開得慢。
 - **季節**：12–2 月下雪；春節（除夕到元宵）掛燈籠；`projects.json` 設定 `"birthday": "MM-DD"` 的話當天飄氣球（會公開）。
 
 平常看不到的狀態可以用網址參數預覽，逗號可以組合：
@@ -69,6 +73,13 @@ python3 -m http.server 4173
 ```
 ?demo=night,fireworks   ?demo=snow   ?demo=newyear   ?demo=birthday
 ?demo=dusk   ?demo=lunch   ?demo=overtime   ?demo=off   ?demo=commit
+?demo=rain   ?demo=storm   ?demo=typhoon   ?demo=debug（把內部狀態掛到 window.__city）
 ```
 
 部署時會把 `og.svg` 轉成 `og.png`（1200×630），作為貼到社群時的預覽圖。
+
+## 其他產出
+
+- `feed.xml`：週報（Atom）。最近八個完整的週各一篇，列出每個專案的 commit 數；公開專案附訊息，私有專案只有數量。
+- `data.json` 的 `hours`／`weekdays`：一年內 commit 落在哪個鐘頭、星期幾（全部專案加總，不分專案）。
+- 專案圖示：公開專案會從它的網站抓 apple-touch-icon；私有專案可在 `projects.json` 用 `"icon": "https://…"` 指定。

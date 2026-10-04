@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Chung 過去一年的開發回顧：commit 數、最長連續、最高的一棟、最常做的專案。">
+<title>年度回顧｜Chung 的開發手帳</title>
+<meta property="og:title" content="年度回顧｜Chung 的開發手帳">
+<meta property="og:image" content="https://chung223.github.io/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  // 跟首頁同一套：這次造訪手動選過就用選的，否則照台北時間
+  try{const t=sessionStorage.getItem('home-theme');if(t==='dark'||t==='light')document.documentElement.dataset.mode=t;}catch{}
+  if(!document.documentElement.dataset.mode){const h=(Date.now()/3600000+8)%24;document.documentElement.dataset.mode=h<5.5||h>=18.5?'dark':'light';}
+</script>
+<style>
+  :root{
+    --paper:#f3eee3; --card:#fbf8f1; --ink:#1c1a17; --muted:#736b5e; --rule:rgba(28,26,23,.16); --rule-soft:rgba(28,26,23,.08);
+    --seal:#c23a22; --h0:rgba(28,26,23,.07); --h2:#8ba3cf; --h3:#4d6fb0; --h4:#1e3d7e;
+    --kai:"LXGW WenKai TC","Noto Serif TC",serif; --sans:"Noto Sans TC",system-ui,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  }
+  :root[data-mode="dark"]{
+    --paper:#12110d; --card:#1b1914; --ink:#ebe5d6; --muted:#9a917f; --rule:rgba(235,229,214,.17); --rule-soft:rgba(235,229,214,.07);
+    --seal:#f0674c; --h0:rgba(235,229,214,.07); --h2:#375692; --h3:#5f86d6; --h4:#a8c5ff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-snap-type:y proximity; -webkit-text-size-adjust:100%}
+  body{
+    background:
+      linear-gradient(var(--rule-soft) 1px, transparent 1px) 0 0/100% 24px,
+      linear-gradient(90deg, var(--rule-soft) 1px, transparent 1px) 0 0/24px 100%,
+      var(--paper);
+    color:var(--ink); font:400 16px/1.7 var(--sans);
+  }
+  a{color:inherit}
+  section{min-height:100dvh; scroll-snap-align:start; display:grid; align-content:center; justify-items:start; gap:14px; width:min(920px,100%); margin:0 auto; padding:48px 24px}
+  .k{font:500 12px/1 var(--mono); letter-spacing:.18em; color:var(--muted); text-transform:uppercase}
+  h1{font:700 clamp(44px,10vw,112px)/1.02 var(--kai)}
+  h2{font:700 clamp(24px,4.6vw,40px)/1.25 var(--kai)}
+  .big{font:500 clamp(84px,24vw,240px)/.95 var(--mono); font-variant-numeric:tabular-nums; color:var(--seal); letter-spacing:-.03em}
+  .big small{font:700 .2em/1 var(--kai); color:var(--ink); margin-left:.25em; letter-spacing:0}
+  .sub{color:var(--muted); max-width:34em}
+  .sub b{color:var(--ink); font-weight:500}
+  .rank{list-style:none; width:100%; display:grid; gap:12px; margin-top:8px}
+  .rank li{display:grid; grid-template-columns:2.2em minmax(0,1fr) auto; gap:4px 12px; align-items:baseline}
+  .rank .n{font:500 22px var(--mono); color:var(--muted)}
+  .rank .t{font:700 clamp(19px,3.4vw,26px) var(--kai); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .rank .c{font:500 16px var(--mono)}
+  .rank .bar{grid-column:2 / -1; height:10px; border-radius:3px; background:var(--h3); width:calc(var(--v) * 100%); transform-origin:0 50%}
+  .rank li:first-child .bar{background:var(--seal)}
+  .seal{display:inline-block; font:700 11px/1 var(--kai); color:var(--seal); border:1.5px solid var(--seal); border-radius:4px; padding:3px 5px 2px; margin-left:8px; transform:rotate(-3deg); vertical-align:middle}
+  .bars{display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:6px; align-items:end; height:180px; width:100%; border-bottom:1px solid var(--rule); margin-top:10px}
+  .bars i{display:block; height:calc(var(--v) * 100%); min-height:3px; background:var(--h2); border-radius:5px 5px 0 0; position:relative}
+  .bars i.peak{background:var(--seal)}
+  .bars i::after{content:attr(data-l); position:absolute; left:50%; top:100%; transform:translateX(-50%); font:400 11px var(--mono); color:var(--muted); padding-top:6px; white-space:nowrap}
+  .trio{display:grid; grid-template-columns:repeat(3,1fr); gap:0; width:100%; border:1.5px solid var(--ink); background:var(--card); box-shadow:6px 6px 0 var(--ink); margin-top:10px}
+  .trio div{padding:18px 20px; border-right:1px solid var(--rule)}
+  .trio div:last-child{border-right:0}
+  .trio dt{font-size:12px; color:var(--muted); letter-spacing:.08em}
+  .trio dd{font:700 clamp(22px,4.4vw,36px)/1.3 var(--kai)}
+  .names{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
+  .names span{font:700 15px var(--kai); border:1px solid var(--rule); background:var(--card); border-radius:999px; padding:3px 13px}
+  img.city{width:100%; margin-top:8px}
+  .home{font:700 18px var(--kai); border:1.5px solid var(--ink); padding:8px 20px; text-decoration:none; box-shadow:4px 4px 0 var(--ink); background:var(--card)}
+  .home:hover{color:var(--seal)}
+  /* 捲到才浮上來 */
+  .anim section > *{opacity:0; transform:translateY(22px); transition:opacity .7s, transform .7s cubic-bezier(.2,.8,.2,1)}
+  .anim section.in > *{opacity:1; transform:none}
+  .anim section.in > :nth-child(2){transition-delay:.1s} .anim section.in > :nth-child(3){transition-delay:.22s}
+  .anim section.in > :nth-child(4){transition-delay:.34s} .anim section.in > :nth-child(5){transition-delay:.46s}
+  @media (max-width:640px){
+    section{padding:40px 18px}
+    .trio{grid-template-columns:1fr; box-shadow:4px 4px 0 var(--ink)}
+    .trio div{border-right:0; border-bottom:1px solid var(--rule)} .trio div:last-child{border-bottom:0}
+    .bars{gap:3px; height:140px} .bars i::after{font-size:9.5px}
+  }
+</style>
+</head>
+<body>
+<main id="main"><section class="in"><p class="k">年度回顧</p><h2 id="loading">載入中…</h2></section></main>
+<noscript><p style="padding:40px 24px">這一頁需要 JavaScript 才能產生回顧。</p></noscript>
+
+<script type="module">
+import { addDays, wdOf, summarize } from './skyline.js';
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const WD = '日一二三四五六';
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ymd = (d) => `${d.slice(0, 4)}/${+d.slice(5, 7)}/${+d.slice(8)}`;
+
+try {
+  const data = await (await fetch(`data.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' })).json();
+  const today = new Date(Date.now() + (data.utcOffsetMinutes ?? 480) * 60000).toISOString().slice(0, 10);
+  const from = addDays(today, -364);
+  const { total, year, activeDays, streak } = summarize(data, today);
+  const days = Object.keys(total).filter((d) => d >= from).sort();
+
+  // 最長連續動工
+  let longest = 0, run = 0, longestEnd = '';
+  for (let d = from; d <= today; d = addDays(d, 1)) {
+    run = total[d] ? run + 1 : 0;
+    if (run > longest) { longest = run; longestEnd = d; }
+  }
+  // 最高的一棟
+  const peakDay = days.reduce((a, d) => (total[d] > (total[a] || 0) ? d : a), days[0]);
+  const peakWho = data.projects.filter((p) => p.days[peakDay]).sort((a, b) => b.days[peakDay] - a.days[peakDay]).slice(0, 3);
+  // 每個月
+  const months = {};
+  for (const d of days) months[d.slice(0, 7)] = (months[d.slice(0, 7)] || 0) + total[d];
+  const monthKeys = Object.keys(months).sort(), monthMax = Math.max(...Object.values(months));
+  const top = [...data.projects].sort((a, b) => b.year - a.year).slice(0, 5);
+  const fresh = data.projects.filter((p) => p.first >= from).sort((a, b) => a.first.localeCompare(b.first));
+  const hours = data.hours || [], wds = data.weekdays || [];
+  const peakH = hours.indexOf(Math.max(...hours)), peakD = wds.indexOf(Math.max(...wds));
+  const part = peakH < 5 ? '凌晨' : peakH < 12 ? '早上' : peakH < 18 ? '下午' : '晚上';
+  const langs = Object.entries(data.projects.reduce((m, p) => (p.lang ? { ...m, [p.lang]: (m[p.lang] || 0) + 1 } : m), {})).sort((a, b) => b[1] - a[1]);
+  const num = (n) => `<span data-to="${n}">${calm ? n.toLocaleString() : 0}</span>`;
+  const seal = (p) => (p.private ? '<span class="seal">非公開</span>' : '');
+  const dark = document.documentElement.dataset.mode === 'dark';
+
+  document.getElementById('main').innerHTML = `
+    <section>
+      <p class="k">${ymd(from)} – ${ymd(today)}</p>
+      <h1>Chung 的<br>這一年</h1>
+      <p class="sub">過去 365 天的開發紀錄，從 commit 算出來的。往下捲。</p>
+    </section>
+    <section>
+      <p class="k">總共</p>
+      <p class="big">${num(year)}<small>個 commit</small></p>
+      <p class="sub">分散在 <b>${data.projects.length + (data.other?.count || 0)} 個專案</b>裡，平均每個動工的日子 <b>${(year / Math.max(1, activeDays)).toFixed(1)} 個</b>。</p>
+    </section>
+    <section>
+      <p class="k">有動工的日子</p>
+      <p class="big">${num(activeDays)}<small>天</small></p>
+      <p class="sub">一年裡有 <b>${Math.round((activeDays / 365) * 100)}%</b> 的日子在寫程式。最長連續 <b>${longest} 天</b>（到 ${ymd(longestEnd)} 為止）${streak ? `，目前連續 <b>${streak} 天</b>` : ''}。</p>
+    </section>
+    <section>
+      <p class="k">最高的一棟</p>
+      <p class="big">${num(total[peakDay])}<small>個 commit</small></p>
+      <h2>${ymd(peakDay)} 星期${WD[wdOf(peakDay)]}</h2>
+      <p class="sub">那天主要在做 ${peakWho.map((p) => `<b>${esc(p.title)}</b>（${p.days[peakDay]}）`).join('、')}。</p>
+    </section>
+    <section>
+      <p class="k">最常做的專案</p>
+      <h2>前五名</h2>
+      <ol class="rank">${top.map((p, i) => `<li><span class="n">${i + 1}</span><span class="t">${esc(p.title)}${seal(p)}</span><span class="c">${p.year.toLocaleString()}</span><i class="bar" style="--v:${(p.year / top[0].year).toFixed(3)}"></i></li>`).join('')}</ol>
+    </section>
+    <section>
+      <p class="k">一個月一個月看</p>
+      <h2>最忙的是 ${+monthKeys.find((m) => months[m] === monthMax).slice(5)} 月</h2>
+      <div class="bars" role="img" aria-label="每個月的 commit 數">${monthKeys.map((m) => `<i style="--v:${(months[m] / monthMax).toFixed(3)}" data-l="${+m.slice(5)}月"${months[m] === monthMax ? ' class="peak"' : ''} title="${m}：${months[m]} 個 commit"></i>`).join('')}</div>
+    </section>
+    <section>
+      <p class="k">作息</p>
+      <h2>${part} ${peakH > 12 ? peakH - 12 : peakH} 點，星期${WD[peakD]}</h2>
+      <p class="sub">這是最常動工的時段和星期。</p>
+      <dl class="trio">
+        <div><dt>最常動工的鐘頭</dt><dd>${peakH}:00</dd></div>
+        <div><dt>最忙的星期</dt><dd>星期${WD[peakD]}</dd></div>
+        <div><dt>最常用的語言</dt><dd>${langs.length ? esc(langs[0][0]) : '—'}</dd></div>
+      </dl>
+    </section>
+    <section>
+      <p class="k">這一年新開的專案</p>
+      <p class="big">${num(fresh.length)}<small>個</small></p>
+      <div class="names">${fresh.map((p) => `<span>${esc(p.title)}</span>`).join('')}</div>
+    </section>
+    <section>
+      <p class="k">蓋出來的城市</p>
+      <h2>每一棟樓是一天</h2>
+      <img class="city" src="skyline-${dark ? 'dark' : 'light'}.svg" alt="過去一年的 commit 天際線">
+      <p><a class="home" href="./">回到開發手帳 →</a></p>
+    </section>`;
+
+  // 捲到才浮上來，數字跟著跳
+  const countUp = (el) => {
+    const to = +el.dataset.to, t0 = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / 1300);
+      el.textContent = Math.round(to * (1 - (1 - p) ** 4)).toLocaleString();
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const sections = document.querySelectorAll('section');
+  if (calm || !('IntersectionObserver' in window)) sections.forEach((s) => s.classList.add('in'));
+  else {
+    document.body.classList.add('anim');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        e.target.querySelectorAll('[data-to]').forEach(countUp);
+        io.unobserve(e.target);
+      }
+    }, { threshold: 0.35 });
+    sections.forEach((s) => io.observe(s));
+  }
+} catch (err) {
+  document.getElementById('loading').textContent = '資料載入失敗';
+  console.error(err);
+}
+</script>
+</body>
+</html>
