@@ -4,9 +4,15 @@ on:
   push:
     branches: [main]
   schedule:
-    # 每 15 分鐘抓一次各 repo 的 commit 紀錄；資料沒變就不重新部署
+    # 設定是每 15 分鐘，但 GitHub 會節流免費的排程：實測大約每 3 小時才真的跑一次（間隔 2.7–7 小時）。
+    # 要更即時，得由外部定時呼叫下面的 workflow_dispatch（auto: true），見 README 的「更新頻率」。
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
+    inputs:
+      auto:
+        description: 自動觸發（外部定時器用）：資料沒變就略過部署
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -46,7 +52,7 @@ jobs:
 
       - name: Skip deploy when nothing changed
         id: diff
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' || inputs.auto
         run: |
           live=$(curl -fsS "https://${{ github.repository_owner }}.github.io/data.json" || echo '{}')
           next=$(jq -r .hash _site/data.json)
@@ -102,10 +108,10 @@ jobs:
       # ── 以下是保險：讓「默默壞掉」變成「會收到通知」 ──
 
       - name: Keep the schedule alive
-        # 公開 repo 60 天沒有新 commit，GitHub 會停用排程。每天重新啟用一次來避免
-        if: github.event_name == 'schedule'
-        run: |
-          if [ "$(date -u +%H)" = "19" ]; then gh api -X PUT "repos/$GH_REPO/actions/workflows/pages.yml/enable" && echo "已重新啟用排程"; fi
+        # 公開 repo 60 天沒有新 commit，GitHub 會停用排程。每次排程執行都重新啟用一次來避免。
+        # （原本只在特定鐘點做，但排程實際上幾小時才跑一次，那個鐘點常常輪不到）
+        if: github.event_name == 'schedule' || inputs.auto
+        run: gh api -X PUT "repos/$GH_REPO/actions/workflows/pages.yml/enable" && echo "已重新啟用排程"
 
       - name: Warn before the token expires
         if: steps.build.outputs.token_expires != ''

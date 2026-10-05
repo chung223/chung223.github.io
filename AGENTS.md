@@ -1,7 +1,7 @@
 # 給 agent 的注意事項
 
 這個 repo 是 https://chung223.github.io/ 的原始碼。網站會自動列出 chung223 名下的專案，
-每 15 分鐘由 GitHub Actions 重抓一次。架構與設定方式見 [README.md](README.md)。
+由 GitHub Actions 定時重抓（設定是每 15 分鐘，實際上 GitHub 會節流，通常幾小時一次）。架構與設定方式見 [README.md](README.md)。
 
 ## 最重要的一件事：這裡的輸出全部是公開的
 
@@ -16,7 +16,7 @@
 
 ## 在別的專案裡建立或推送新 repo 時
 
-只要是在 chung223 帳號下，下一次排程（最多 15 分鐘）它就會出現在首頁。
+只要是在 chung223 帳號下，下一次同步它就會出現在首頁（最快 15 分鐘，通常幾小時內）。
 
 1. **description 寫成可以公開的內容。** 私有 repo 也一樣。
 2. **不該公開的 repo，在建立之前先到這個 repo 的 `projects.json` 加設定**（repo 還不存在也可以先寫）：

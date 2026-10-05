@@ -3,7 +3,7 @@
 個人首頁：https://chung223.github.io/
 
 列出正在開發的專案，每個專案有 commit 熱力圖、最後更新時間和最近改了什麼。
-資料由 GitHub Actions 每 15 分鐘自動抓一次，不需要手動維護。
+資料由 GitHub Actions 自動抓，不需要手動維護（實際頻率見下面的「更新頻率」）。
 
 ## 怎麼運作
 
@@ -38,7 +38,7 @@
 ```
 
 不想公開的 repo 要**在建立之前**先加 `hide` 或 `aggregateOnly`（設定可以先寫，repo 還不存在也沒關係），
-否則最多 15 分鐘內它就會出現在首頁。把 `autoListPrivate` 改成 `false` 可以回到「沒列的一律不出現」。
+否則下一次同步它就會出現在首頁（最快 15 分鐘）。把 `autoListPrivate` 改成 `false` 可以回到「沒列的一律不出現」。
 
 私有專案只會公開顯示名稱、簡介、語言、每日 commit 數和最後更新時間；
 commit 訊息與網址不會寫進 `data.json`。給其他 agent 的注意事項在 [AGENTS.md](AGENTS.md)。
@@ -61,6 +61,23 @@ commit 訊息與網址不會寫進 `data.json`。給其他 agent 的注意事項
 右上角的「EN／中」可以切換語言，預設照瀏覽器語言，選擇會記住。介面文字在 `i18n.js`；
 專案的英文名稱與簡介寫在 `projects.json` 的 `title_en`、`summary_en`（沒寫就沿用中文）。
 commit 訊息、README 用的圖和週報不翻譯。
+
+## 更新頻率
+
+排程設定是每 15 分鐘，但 **GitHub 會節流免費的排程**。2026-10-04 到 10-05 實測：27 小時只執行了 6 次，
+間隔 2.7–7 小時，中位數約 3 小時。所以新的 commit 通常要幾個小時後才會出現在首頁。
+
+要接近即時，需要由外部準時呼叫這個 workflow。任何能定時發 HTTP 請求的地方都可以（自己的主機的 crontab、
+cron-job.org 之類的服務）：
+
+```bash
+# 每 15 分鐘一次。TOKEN 是只對這個 repo 有「Actions: Read and write」權限的 fine-grained PAT
+curl -fsS -X POST -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" \
+  https://api.github.com/repos/chung223/chung223.github.io/actions/workflows/pages.yml/dispatches \
+  -d '{"ref":"main","inputs":{"auto":"true"}}'
+```
+
+`auto: true` 代表資料沒變就略過部署，所以頻繁呼叫不會造成頻繁部署。
 
 ## 設定 token（只需一次）
 
