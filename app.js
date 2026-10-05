@@ -200,12 +200,13 @@ function render(first) {
 
   const latest = projects[0];
   $('status').textContent = latest ? t('lastBuilt', rel(latest.last)) : 'Build log';
-  // 排程至少每 6 小時會重新部署一次；超過 14 小時沒動靜，多半是 token 過期或排程被停用
+  // 排程實際上每幾小時才跑一次，資料沒變時要滿 6 小時才重新部署，所以正常情況下最久大約半天。
+  // 超過 24 小時沒動靜，才當作 token 過期或排程被停用
   const staleHours = Math.floor((Date.now() - Date.parse(data.generatedAt)) / 3600000);
-  $('foot-sync').textContent = staleHours >= 14
+  $('foot-sync').textContent = staleHours >= 24
     ? t('stale', staleHours, exact(data.generatedAt))
     : t('synced', exact(data.generatedAt));
-  $('foot-sync').classList.toggle('stale', staleHours >= 14);
+  $('foot-sync').classList.toggle('stale', staleHours >= 24);
   const privCount = projects.filter((p) => p.private).length + (data.other?.count || 0);
   note = t('allProjects', privCount);
   setNote();

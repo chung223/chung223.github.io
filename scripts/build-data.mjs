@@ -339,7 +339,7 @@ const line = (p) => {
 };
 const llms = `# Chung's Build Log (Chung 的開發手帳)
 
-> Personal site of Chung (GitHub: ${OWNER}), a developer who builds native iOS and macOS apps, PWAs and small tools. The site is a self-updating build log: every project is listed with a commit heatmap, its last update, and recent changes, regenerated from GitHub every 15 minutes. Times are in UTC+${TZ_OFFSET_MIN / 60} (Asia/Taipei).
+> Personal site of Chung (GitHub: ${OWNER}), a developer who builds native iOS and macOS apps, PWAs and small tools. The site is a self-updating build log: every project is listed with a commit heatmap, its last update, and recent changes, regenerated from GitHub several times a day. Times are in UTC+${TZ_OFFSET_MIN / 60} (Asia/Taipei).
 
 This file is generated on every deploy. Figures below are as of ${today}.
 
