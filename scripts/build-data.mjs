@@ -34,17 +34,37 @@ const LOG_PER_DAY = 3;
 const BOT = /github-actions|\[bot\]|dependabot|renovate/i;
 
 let tokenExpires = '';
+const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
+// GitHub API 偶爾會回 5xx 或斷線（2026-10-09 就有一次 502 讓整次部署失敗）。這種錯誤等一下再試，最多四次
 async function api(path, init = {}) {
-  const res = await fetch(`https://api.github.com${path}`, {
-    ...init,
-    headers: {
-      accept: 'application/vnd.github+json',
-      'user-agent': `${OWNER}-homepage`,
-      ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
-      ...init.headers,
-    },
-  });
-  if (!res.ok) throw new Error(`${init.method || 'GET'} ${path} → ${res.status} ${await res.text()}`);
+  for (let attempt = 1; ; attempt++) {
+    let res;
+    try {
+      res = await fetch(`https://api.github.com${path}`, {
+        ...init,
+        headers: {
+          accept: 'application/vnd.github+json',
+          'user-agent': `${OWNER}-homepage`,
+          ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
+          ...init.headers,
+        },
+      });
+    } catch (err) {
+      if (attempt >= 4) throw err;
+      console.warn(`${path} 連線失敗（${err.message}），${attempt * 5} 秒後重試`);
+      await sleep(attempt * 5000);
+      continue;
+    }
+    if (res.ok) return done(res);
+    if ((res.status >= 500 || res.status === 429) && attempt < 4) {
+      console.warn(`${path} → ${res.status}，${attempt * 5} 秒後重試`);
+      await sleep(attempt * 5000);
+      continue;
+    }
+    throw new Error(`${init.method || 'GET'} ${path} → ${res.status} ${(await res.text()).slice(0, 200)}`);
+  }
+}
+async function done(res) {
   // PAT 的到期時間會放在這個 header，留給 workflow 在快到期時提醒
   tokenExpires ||= res.headers.get('github-authentication-token-expiration') || '';
   return res.json();
