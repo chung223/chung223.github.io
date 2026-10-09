@@ -222,9 +222,11 @@ if (cfg.analytics?.goatcounter) body.goatcounter = cfg.analytics.goatcounter;
 // ── 部署前的最後一關：私有專案不該帶的東西一樣都不能出現，有就直接失敗、不部署 ──
 const PRIVATE_KEYS = new Set(['title', 'summary', 'private', 'lang', 'tags', 'total', 'year', 'last', 'first', 'days', 'site', 'icon', 'en']);
 const privateUrls = selected.filter(({ repo }) => repo.private).map(({ repo }) => repo.html_url);
+// 網址要整個對上才算：私有的 .../pastee 不能因為公開的 .../pastee-site 以它開頭就誤判
+const whole = (url) => new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z0-9._-])');
 function assertNoLeak(text, where) {
-  const hit = privateUrls.find((u) => text.includes(u));
-  if (hit) throw new Error(`隱私檢查失敗：${where} 含有私有 repo 的網址`);
+  const hit = privateUrls.find((u) => whole(u).test(text));
+  if (hit) throw new Error(`隱私檢查失敗：${where} 含有私有 repo 的網址（${hit.split('/').pop()}）`);
 }
 for (const p of projects.filter((p) => p.private)) {
   const extra = Object.keys(p).filter((k) => !PRIVATE_KEYS.has(k));

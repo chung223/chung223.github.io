@@ -3,14 +3,19 @@
   "utcOffsetMinutes": 480,
   "autoListPrivate": true,
   "birthday": "02-23",
-  "analytics": { "goatcounter": "chung223" },
-  "links": { "linkedin": "https://www.linkedin.com/in/weichung-lai-011841300/" },
+  "analytics": {
+    "goatcounter": "chung223"
+  },
+  "links": {
+    "linkedin": "https://www.linkedin.com/in/weichung-lai-011841300/"
+  },
   "projects": {
     "ppnote": {
       "title": "Folium",
       "summary": "取代 Acrobat Pro 的 PDF 工作站，手寫是一等功能。iPhone、iPad、Mac 原生。",
       "tags": ["iOS", "iPadOS", "macOS"],
-      "summary_en": "A PDF workstation to replace Acrobat Pro, with handwriting as a first-class feature. Native on iPhone, iPad and Mac."
+      "summary_en": "A PDF workstation to replace Acrobat Pro, with handwriting as a first-class feature. Native on iPhone, iPad and Mac.",
+      "url": "https://chung223.github.io/folium/"
     },
     "ticket-watch": {
       "title": "Ticket Watch",
@@ -29,7 +34,8 @@
       "summary": "原生 Swift 剪貼簿管理工具，Mac、iPhone、iPad 以 iCloud 即時同步，iOS 上另有貼貼鍵盤。",
       "tags": ["iOS", "macOS"],
       "title_en": "Pastee",
-      "summary_en": "A native Swift clipboard manager for Mac, iPhone and iPad with live iCloud sync, plus a keyboard on iOS."
+      "summary_en": "A native Swift clipboard manager for Mac, iPhone and iPad with live iCloud sync, plus a keyboard on iOS.",
+      "url": "https://chung223.github.io/pastee-site/"
     },
     "Murmo": {
       "title": "Murmo",
@@ -230,6 +236,8 @@
     },
     "z-image-prompt-generator": {
       "summary_en": "A Ghibli-style prompt generator for Z-Image Turbo."
-    }
+    },
+    "folium": { "aggregateOnly": true },
+    "pastee-site": { "aggregateOnly": true }
   }
 }
