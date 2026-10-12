@@ -238,6 +238,13 @@
       "summary_en": "A Ghibli-style prompt generator for Z-Image Turbo."
     },
     "folium": { "aggregateOnly": true },
-    "pastee-site": { "aggregateOnly": true }
+    "pastee-site": { "aggregateOnly": true },
+    "shot-releases": {
+      "title": "Shot",
+      "summary": "macOS 選單列截圖工具：截圖與捲動截圖、錄影與 GIF、標註、文字辨識與翻譯、可搜尋的截圖歷史。",
+      "tags": ["macOS"],
+      "summary_en": "A menu bar screenshot tool for macOS: screenshots and scrolling capture, screen recording and GIFs, annotation, text recognition and translation, and searchable history."
+    },
+    "shot": { "aggregateOnly": true }
   }
 }
