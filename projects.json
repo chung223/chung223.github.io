@@ -241,9 +241,9 @@
     "pastee-site": { "aggregateOnly": true },
     "shot-releases": {
       "title": "Shot",
-      "summary": "macOS 選單列截圖工具：截圖與捲動截圖、錄影與 GIF、標註、文字辨識與翻譯、可搜尋的截圖歷史。",
-      "tags": ["macOS"],
-      "summary_en": "A menu bar screenshot tool for macOS: screenshots and scrolling capture, screen recording and GIFs, annotation, text recognition and translation, and searchable history."
+      "summary": "macOS 選單列截圖工具：截圖掛在螢幕頂端的曬衣繩上隨手拖用，標註、釘選、錄影、文字與表格辨識，還能讓 AI agent 取用截圖。",
+      "tags": ["macOS", "AI"],
+      "summary_en": "A macOS menu bar screenshot tool: screenshots hang on a clothesline at the top of your screen, ready to drag anywhere. Annotate, pin, record, pull out text and tables, and let AI agents use your screenshots."
     },
     "shot": { "aggregateOnly": true }
   }
