@@ -188,6 +188,9 @@ const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
     if ((log[d] ||= []).length < LOG_PER_DAY) log[d].push(c.messageHeadline.slice(0, 100));
   }
   const stats = { total: commits.length, year, last: commits[0].committedDate, first: localDay(commits.at(-1).committedDate), days };
+  // 原始碼另外放在私有 repo 的專案：commit 數併進公開那張卡片（只併數字，commit 訊息不併）
+  // 私有 repo 的 commit 訊息只留在這裡給部署前的檢查用，不會寫進 data.json
+  if (entry.mergeInto) return { mergeInto: entry.mergeInto, secretMessages: repo.private ? commits.map((c) => c.messageHeadline) : [], ...stats };
   if (entry.aggregateOnly) return { aggregateOnly: true, ...stats };
 
   const project = {
@@ -221,8 +224,29 @@ const built = await mapLimit(selected, 6, async ({ repo, entry }) => {
   return project;
 });
 
+// mergeInto：把一個 repo 的 commit 數併進另一個 repo 的卡片（例如私有的原始碼併進公開的發佈 repo）。
+// 只併數字（總數、近一年、每天幾個、最早與最後），commit 訊息與網址不會跟著過去。
+// 找不到目標卡片（目標被 hide、沒有 commit…）就照 aggregateOnly 處理，只算進總熱力圖。
+const byName = new Map(selected.map(({ repo }, i) => [repo.name, built[i]]));
+// 合併前先記下每張卡片自己（公開 repo）的 commit 訊息，部署前的檢查用來排除兩邊剛好一樣的訊息
+const ownMessages = new Map(
+  built.filter((p) => p?.recent || p?.log).map((p) => [p, new Set([...(p.recent ?? []).map((r) => r.m), ...Object.values(p.log ?? {}).flat()])]),
+);
+for (const p of built.filter((p) => p?.mergeInto)) {
+  const target = byName.get(p.mergeInto);
+  if (!target || target.aggregateOnly || target.mergeInto) {
+    p.aggregateOnly = true;
+    continue;
+  }
+  target.total += p.total;
+  target.year += p.year;
+  for (const [d, n] of Object.entries(p.days)) target.days[d] = (target.days[d] || 0) + n;
+  if (p.last > target.last) target.last = p.last;
+  if (p.first < target.first) target.first = p.first;
+}
+
 const projects = built
-  .filter((p) => p && !p.aggregateOnly)
+  .filter((p) => p && !p.aggregateOnly && !p.mergeInto)
   .sort((a, b) => b.last.localeCompare(a.last));
 
 // 不列卡片、只併入總熱力圖的專案：合成一筆匿名資料
@@ -253,6 +277,13 @@ for (const p of projects.filter((p) => p.private)) {
   if (extra.length) throw new Error(`隱私檢查失敗：私有專案「${p.title}」多了不該公開的欄位 ${extra.join(', ')}`);
 }
 assertNoLeak(JSON.stringify(body), 'data.json');
+// 併進公開卡片的私有 repo：它的 commit 訊息一則都不能出現（公開 repo 自己也有的一樣的訊息除外，例如 Initial commit）
+for (const p of built.filter((p) => p?.mergeInto && p.secretMessages?.length)) {
+  const own = ownMessages.get(byName.get(p.mergeInto)) ?? new Set();
+  const text = JSON.stringify(body);
+  const hit = p.secretMessages.find((m) => m.length >= 6 && !own.has(m) && text.includes(JSON.stringify(m).slice(1, -1)));
+  if (hit) throw new Error(`隱私檢查失敗：併進「${p.mergeInto}」的私有 repo 的 commit 訊息出現在 data.json`);
+}
 
 // 內容雜湊不含產生時間，排程用它判斷資料有沒有變、要不要重新部署
 const hash = createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 16);

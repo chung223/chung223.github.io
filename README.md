@@ -34,11 +34,16 @@
 ```jsonc
 "repo-name": { "title": "顯示名稱", "summary": "一句話簡介", "tags": ["iOS"] }  // 換成比較好的名稱與簡介
 "repo-name": { "aggregateOnly": true }                                          // 只計入總熱力圖，不列名
+"repo-name": { "mergeInto": "other-repo" }                                      // commit 數併進另一個 repo 的卡片
 "repo-name": { "hide": true }                                                   // 完全不出現
 ```
 
 不想公開的 repo 要**在建立之前**先加 `hide` 或 `aggregateOnly`（設定可以先寫，repo 還不存在也沒關係），
 否則下一次同步它就會出現在首頁（最快 15 分鐘）。把 `autoListPrivate` 改成 `false` 可以回到「沒列的一律不出現」。
+
+`mergeInto` 給「原始碼放在私有 repo、另外有公開發佈 repo」的專案用（例如 `"shot": { "mergeInto": "shot-releases" }`）：
+私有 repo 的總數、近一年、每天幾個 commit、最早與最後的時間併進公開 repo 的卡片，總熱力圖的數字不變（從「其他非公開專案」搬過去）。
+commit 訊息與網址不會跟著過去，部署前會檢查私有 repo 的 commit 訊息沒有出現在 `data.json`。找不到目標卡片時照 `aggregateOnly` 處理。
 
 私有專案只會公開顯示名稱、簡介、語言、每日 commit 數和最後更新時間；
 commit 訊息與網址不會寫進 `data.json`。給其他 agent 的注意事項在 [AGENTS.md](AGENTS.md)。

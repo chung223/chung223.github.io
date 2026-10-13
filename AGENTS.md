@@ -22,6 +22,8 @@
 2. **不該公開的 repo，在建立之前先到這個 repo 的 `projects.json` 加設定**（repo 還不存在也可以先寫）：
    - `"<repo 名稱>": { "hide": true }`：完全不出現。
    - `"<repo 名稱>": { "aggregateOnly": true }`：只把 commit 數計入總熱力圖，不列名。
+   - `"<repo 名稱>": { "mergeInto": "<另一個 repo>" }`：commit 數併進另一個 repo 的卡片（原始碼私有、另外有公開發佈 repo 時用），
+     commit 訊息與網址不會跟著過去。
 3. 拿不準該不該公開就先問使用者，或先標 `hide`，之後再打開。
 4. 想要比 repo 名稱更好的顯示名稱或中文簡介，加
    `"<repo 名稱>": { "title": "…", "summary": "…", "tags": ["iOS"] }`。
