@@ -245,6 +245,6 @@
       "tags": ["macOS", "AI"],
       "summary_en": "A macOS menu bar screenshot tool: screenshots hang on a clothesline at the top of your screen, ready to drag anywhere. Annotate, pin, record, pull out text and tables, and let AI agents use your screenshots."
     },
-    "shot": { "aggregateOnly": true }
+    "shot": { "mergeInto": "shot-releases" }
   }
 }

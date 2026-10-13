@@ -189,6 +189,11 @@ try {
     const data = JSON.parse((await get('/data.json')).text);
     const leaky = data.projects.filter((p) => p.private && (p.recent || p.log || p.repo));
     check('私有專案沒有 commit 內容或網址', leaky.length === 0, leaky.map((p) => p.title).join(', '));
+    // mergeInto：併進去的目標卡片要真的存在（公開的目標用 repo 網址對）
+    const cfg = JSON.parse(await readFile('projects.json', 'utf8'));
+    const targets = [...new Set(Object.values(cfg.projects ?? {}).map((e) => e.mergeInto).filter(Boolean))];
+    const missing = targets.filter((t) => !data.projects.some((p) => p.repo?.endsWith(`/${t}`) || p.title === (cfg.projects[t]?.title ?? t)));
+    check('mergeInto 的目標卡片都在', missing.length === 0, missing.join(', '));
   }
 } finally {
   await browser.close();
