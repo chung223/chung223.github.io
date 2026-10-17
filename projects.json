@@ -10,6 +10,14 @@
     "linkedin": "https://www.linkedin.com/in/weichung-lai-011841300/"
   },
   "projects": {
+    "Presence": {
+      "title": "Presence",
+      "summary": "人一離開 Mac 就自動鎖定、回來自動解鎖；iPhone 與 Apple Watch 也能當簡報筆，有雷射筆、聚光燈和螢光筆。",
+      "tags": ["macOS", "iOS"],
+      "summary_en": "Locks your Mac when you walk away and unlocks it when you come back. Your iPhone and Apple Watch double as a presentation remote with a laser pointer, spotlight, and highlighter.",
+      "url": "https://chung223.github.io/presence-site/"
+    },
+    "presence-site": { "aggregateOnly": true },
     "ppnote": {
       "title": "Folium",
       "summary": "取代 Acrobat Pro 的 PDF 工作站，手寫是一等功能。iPhone、iPad、Mac 原生。",
