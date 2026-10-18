@@ -236,7 +236,6 @@
     "kaku-support": { "hide": true },
     "murmo-releases": { "hide": true },
     "tw-card-cash-back": { "hide": true },
-    "tessera": { "hide": true },
     "dockette": { "hide": true },
     "crufu-run-2026": {
       "summary_en": "Interactive route page for the 7th CRUFU RUN in northern Taiwan."
@@ -255,6 +254,13 @@
       "tags": ["macOS", "AI"],
       "summary_en": "A macOS menu bar screenshot tool: screenshots hang on a clothesline at the top of your screen, ready to drag anywhere. Annotate, pin, record, pull out text and tables, and let AI agents use your screenshots."
     },
-    "shot": { "mergeInto": "shot-releases" }
+    "shot": { "mergeInto": "shot-releases" },
+    "tessera-releases": {
+      "title": "Tessera",
+      "summary": "macOS 視窗拼貼工具：用快捷鍵、拖曳版面列與觸控板手勢，把視窗從螢幕一邊無縫拼滿到另一邊；還有工作區、自由版面編輯與給 AI agent 用的命令列。",
+      "tags": ["macOS", "AI"],
+      "summary_en": "A macOS window tiler: snap windows edge to edge with shortcuts, a drag-to-tile layout bar and trackpad gestures, plus workspaces, a free-form layout editor and a command line for AI agents."
+    },
+    "tessera": { "mergeInto": "tessera-releases" }
   }
 }
