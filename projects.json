@@ -236,6 +236,7 @@
     "kaku-support": { "hide": true },
     "murmo-releases": { "hide": true },
     "tw-card-cash-back": { "hide": true },
+    "tessera": { "hide": true },
     "crufu-run-2026": {
       "summary_en": "Interactive route page for the 7th CRUFU RUN in northern Taiwan."
     },
