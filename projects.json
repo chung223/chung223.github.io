@@ -237,7 +237,6 @@
     "kaku-support": { "hide": true },
     "murmo-releases": { "hide": true },
     "tw-card-cash-back": { "hide": true },
-    "dockette": { "hide": true },
     "crufu-run-2026": {
       "summary_en": "Interactive route page for the 7th CRUFU RUN in northern Taiwan."
     },
@@ -262,6 +261,13 @@
       "tags": ["macOS", "AI"],
       "summary_en": "A macOS window tiler: snap windows edge to edge with shortcuts, a drag-to-tile layout bar and trackpad gestures, plus workspaces, a free-form layout editor and a command line for AI agents."
     },
-    "tessera": { "mergeInto": "tessera-releases" }
+    "tessera": { "mergeInto": "tessera-releases" },
+    "dockette-releases": {
+      "title": "Dockette",
+      "summary": "macOS 的 Dock 小幫手：游標停在 Dock 圖示上就看得到 App 的每個視窗，還有播放器、今日行程卡片與 Windows 式的 ⌘Tab 視窗切換器。",
+      "tags": ["macOS"],
+      "summary_en": "A Dock companion for macOS: rest the pointer on a Dock icon to see every window of the app, plus a music player, today's calendar and a Windows-style ⌘Tab window switcher."
+    },
+    "dockette": { "mergeInto": "dockette-releases" }
   }
 }
