@@ -144,6 +144,7 @@
     },
     "fly-enclave": { "aggregateOnly": true },
     "amberview": { "aggregateOnly": true },
+    "amberview-updates": { "aggregateOnly": true },
     "family-fourh-hostmatch": { "aggregateOnly": true },
     "md-iphone-shortcut": { "aggregateOnly": true },
     "chung223.github.io": {
