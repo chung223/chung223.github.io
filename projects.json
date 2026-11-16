@@ -265,6 +265,7 @@
       "tags": ["macOS", "AI"],
       "summary_en": "A macOS window tiler: snap windows edge to edge with shortcuts, a drag-to-tile layout bar and trackpad gestures, plus workspaces, a free-form layout editor and a command line for AI agents."
     },
-    "tessera": { "mergeInto": "tessera-releases" }
+    "tessera": { "mergeInto": "tessera-releases" },
+    "yoin": { "hide": true }
   }
 }
